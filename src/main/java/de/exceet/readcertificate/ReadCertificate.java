@@ -30,6 +30,8 @@ public class ReadCertificate {
      */
     public void write(File file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm) throws Exception {
 
+        System.out.println("[INFO] starting certificate generator");
+
         // define serial number, certificate generator and the issuer/subjectdn
         BigInteger serialNumber = BigInteger.valueOf(serNumber);
         X509V1CertificateGenerator certGen = new X509V1CertificateGenerator();
@@ -56,6 +58,7 @@ public class ReadCertificate {
         output = output + X509Factory.END_CERT;
 
         // System.out.println(output);
+        System.out.println("[INFO] writing certificate to " + file);
 
         // write the String into the file ("mycertificate.crt")
         FileWriter wr = new FileWriter(file);
@@ -73,6 +76,7 @@ public class ReadCertificate {
      * @throws javax.security.cert.CertificateException Needed if some of the inputs are wrong
      */
     public List<String> read(File file) throws IOException, javax.security.cert.CertificateException {
+        System.out.println("[INFO] starting certificate reader");
         // define input stream to read the file
         InputStream inStream = new FileInputStream(file);
 
@@ -103,22 +107,7 @@ public class ReadCertificate {
         // print the version and get and print serial number, issuer, validity, subject, subject public key info,
         // hash code and the name of the signature algorithm
 
-        /*
-        System.out.println("---Zertifikat---");
-        System.out.println("Version: " + v);
-        System.out.println("Serial Number: " + cert.getSerialNumber());
-        System.out.println("Issuer: " + cert.getIssuerDN());
-        System.out.println("Subject: " + cert.getSubjectDN());
-        if (dateVal) {
-            System.out.println("Validity: " + date1 + " - " + date2 + " - The certificate is valid.");
-        } else {
-            System.err.println("Validity: " + date1 + " - " + date2 + " - The certificate is not valid.");
-        }
-        System.out.println("Subject Public Key Info: " + cert.getPublicKey());
-        System.out.println("Hash Code: " + cert.hashCode());
-        System.out.println("Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
-        */
-        output.add(0,"---Zertifikat---");
+        output.add(0,"[INFO] Printing certificate data:");
         output.add(1,"Version: " + v);
         output.add(2,"Serial Number: " + cert.getSerialNumber());
         output.add(3,"Issuer: " + cert.getIssuerDN());
@@ -133,6 +122,8 @@ public class ReadCertificate {
         output.add(7,"Subject Public Key Info: " + cert.getPublicKey());
         output.add(8,"Hash Code: " + cert.hashCode());
         output.add(9,"Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
+
+        System.out.println("[INFO] successfully read certificate");
 
         return output;
     }
@@ -157,17 +148,17 @@ public class ReadCertificate {
 
     public void printCertDataToConsole(List<String> input){
         System.out.println(input.get(0));
-        System.out.println(input.get(1));
-        System.out.println(input.get(2));
-        System.out.println(input.get(3));
-        System.out.println(input.get(4));
+        System.out.println("[-] " + input.get(1));
+        System.out.println("[-] " + input.get(2));
+        System.out.println("[-] " + input.get(3));
+        System.out.println("[-] " + input.get(4));
         if(Integer.valueOf(input.get(6)) == 0){
-            System.out.println(input.get(5));
+            System.out.println("[-] " + input.get(5));
         }else{
-            System.err.println(input.get(5));
+            System.err.println("[-] " + input.get(5));
         }
-        System.out.println(input.get(7));
-        System.out.println(input.get(8));
-        System.out.println(input.get(9));
+        System.out.println("[-] " + input.get(7));
+        System.out.println("[-] " + input.get(8));
+        System.out.println("[-] " + input.get(9));
     }
 }

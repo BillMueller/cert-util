@@ -50,6 +50,7 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public static void main(String[] argv) throws Exception {
+        System.out.println("[INFO] Starting the program");
         Main main = new Main();
         JCommander.newBuilder()
                 .addObject(main)
@@ -68,42 +69,6 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public void run() throws Exception {
-        ReadCertificate rc = new ReadCertificate();
-
-        Properties dProps = readProperties();
-        String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-        String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-        int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
-        String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-        String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-        String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-        String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-        String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
-        String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
-        String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-
-        Date dStDate, dExDate = new Date();
-        long milSecValid = 31536000000L, dSerNumber;
-
-        if (dPropsStDate.equals("default")) {
-            dStDate = new Date();
-        } else {
-            dStDate = stringToDate(dPropsStDate);
-        }
-        if (dPropsValidity.equals("default") == false) {
-            milSecValid = Long.valueOf(dPropsValidity);
-        }
-        if (dPropsExDate.equals("default")) {
-            dExDate.setTime(dStDate.getTime() + milSecValid);
-        } else {
-            dExDate = stringToDate(dPropsExDate);
-        }
-        if (dPropsSerNumber.equals("default")) {
-            dSerNumber = new Date().getTime();
-        } else {
-            dSerNumber = Long.valueOf(dPropsSerNumber);
-        }
-
         if (help || gHelp) {
             if (gen || gHelp) {
                 printHelp(0);
@@ -111,12 +76,49 @@ public class Main {
             if (read || gHelp) {
                 printHelp(1);
             }
-        }
-        if (help != true && gen == true) {
-            startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
-        }
-        if (read && help != true) {
-            startReader(rc, dPathFile, dCertName);
+        }else {
+            ReadCertificate rc = new ReadCertificate();
+
+            Properties dProps = readProperties();
+            String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+            String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+            int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
+            String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+            String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+            String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+            String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+            String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
+            String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
+            String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+
+            Date dStDate, dExDate = new Date();
+            long milSecValid = 31536000000L, dSerNumber;
+
+            if (dPropsStDate.equals("default")) {
+                dStDate = new Date();
+            } else {
+                dStDate = stringToDate(dPropsStDate);
+            }
+            if (dPropsValidity.equals("default") == false) {
+                milSecValid = Long.valueOf(dPropsValidity);
+            }
+            if (dPropsExDate.equals("default")) {
+                dExDate.setTime(dStDate.getTime() + milSecValid);
+            } else {
+                dExDate = stringToDate(dPropsExDate);
+            }
+            if (dPropsSerNumber.equals("default")) {
+                dSerNumber = new Date().getTime();
+            } else {
+                dSerNumber = Long.valueOf(dPropsSerNumber);
+            }
+
+            if (help != true && gen == true) {
+                startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
+            }
+            if (read && help != true) {
+                startReader(rc, dPathFile, dCertName);
+            }
         }
 
     }
@@ -248,6 +250,7 @@ public class Main {
      * @throws Exception If the Generator throws an Exception
      */
     public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) throws Exception {
+        System.out.println("[INFO] checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
         Date stDate = defaultDate(sDate, dStDate);
@@ -260,6 +263,7 @@ public class Main {
 
         pFile = pFile + "/";
 
+        System.out.println("[INFO] generating key pair");
 
         //-----+
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
@@ -299,6 +303,7 @@ public class Main {
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
     public static Properties readProperties() {
+        System.out.println("[INFO] loading config.properties");
         Properties prop = new Properties();
         InputStream input = null;
 
@@ -307,6 +312,8 @@ public class Main {
             //TODO split try-catch and in case of an "File not found"-Exception generate a file with the default values
 
             prop.load(input);
+
+            System.out.println("[INFO] successfully loaded settings from config.properties");
 
         } catch (IOException ex) {
             System.err.println("[ERROR] config.properties couldn't be found");
