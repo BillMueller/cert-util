@@ -138,7 +138,7 @@ public class Main {
                 rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
 
                 if (bRead) {
-                    rc.read(file);
+                    rc.printCertDataToConsole(rc.read(file));
                 }
             }
         }
