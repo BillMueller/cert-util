@@ -4,10 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
 import javax.security.cert.CertificateException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Date;
@@ -53,15 +50,12 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public static void main(String[] argv) throws Exception {
-        readProperties();
-        /*
         Main main = new Main();
         JCommander.newBuilder()
                 .addObject(main)
                 .build()
                 .parse(argv);
         main.run();
-        */
     }
 
     /**
@@ -74,19 +68,42 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public void run() throws Exception {
-        // TODO create and read config file
         ReadCertificate rc = new ReadCertificate();
-        Date dExDate = new Date();
-        long milSecValid = 31536000000L;                                    // default time in milliseconds the certificate is valid after generating it
-        String dPathFile = "C:/Users/jvansprang/Desktop/Certificates";     // default pathfile
-        String dCertName = "mycertificate";                                 // default certificate name
-        Date dStDate = new Date();                                          // default startdate
-        dExDate.setTime(dExDate.getTime() + milSecValid);                   // default expriydate
-        long dSerNumber = new Date().getTime();                             // default serial number
-        int dKeys = 4096;                                                   // default keysize
-        String dSignAlg = "SHA256withRSA";                                  // default signature algorithm
 
-        Date stDate, exDate;
+        Properties dProps = readProperties();
+        String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+        String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+        int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
+        String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+        String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+        String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+        String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+        String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
+        String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
+        String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+
+        Date dStDate, dExDate = new Date();
+        long milSecValid = 31536000000L, dSerNumber;
+
+        if (dPropsStDate.equals("default")) {
+            dStDate = new Date();
+        } else {
+            dStDate = stringToDate(dPropsStDate);
+        }
+        if (dPropsValidity.equals("default") == false) {
+            milSecValid = Long.valueOf(dPropsValidity);
+        }
+        if (dPropsExDate.equals("default")) {
+            dExDate.setTime(dStDate.getTime() + milSecValid);
+        } else {
+            dExDate = stringToDate(dPropsExDate);
+        }
+        if (dPropsSerNumber.equals("default")) {
+            dSerNumber = new Date().getTime();
+        } else {
+            dSerNumber = Long.valueOf(dPropsSerNumber);
+        }
+
         if (help || gHelp) {
             if (gen || gHelp) {
                 printHelp(0);
@@ -96,10 +113,10 @@ public class Main {
             }
         }
         if (help != true && gen == true) {
-            startGenerator(rc, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
+            startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
         }
         if (read && help != true) {
-            startReader(rc, dPathFile);
+            startReader(rc, dPathFile, dCertName);
         }
 
     }
@@ -209,6 +226,7 @@ public class Main {
             y = (Integer.valueOf(sa[6])) * 1000 + (Integer.valueOf(sa[7])) * 100 + (Integer.valueOf(sa[8])) * 10 + (Integer.valueOf(sa[9]));
         } catch (Exception e) {
             // out.println(e);
+            System.out.println("No valid date");
             System.exit(1);
         }
         Date o = new GregorianCalendar(y, m - 1, d).getTime();
@@ -218,95 +236,102 @@ public class Main {
 
     /**
      * Starts the Certificate generator. Needs all default values for the Certificate parameters.
-     * @param rc ReadCertificate class object that's needed to start the Certificate generator in the that Class
-     * @param dStDate Default start date the Certificate generator should use if it isn't set
-     * @param dExDate Default expiry date the Certificate generator should use if it isn't set
-     * @param dKeys Default key size the Certificate generator should use if it isn't set
+     *
+     * @param rc         ReadCertificate class object that's needed to start the Certificate generator in the that Class
+     * @param dStDate    Default start date the Certificate generator should use if it isn't set
+     * @param dExDate    Default expiry date the Certificate generator should use if it isn't set
+     * @param dKeys      Default key size the Certificate generator should use if it isn't set
      * @param dSerNumber Default serial number the Certificate generator should use if it isn't set
-     * @param dCertName Default certificate filename the Certificate generator should use if it isn't set
-     * @param dSignAlg Default signature algorithm the Certificate generator should use if it isn't set
-     * @param dPathFile Default path file the Certificate generator should use if it isn't set
+     * @param dCertName  Default certificate filename the Certificate generator should use if it isn't set
+     * @param dSignAlg   Default signature algorithm the Certificate generator should use if it isn't set
+     * @param dPathFile  Default path file the Certificate generator should use if it isn't set
      * @throws Exception If the Generator throws an Exception
      */
-    public void startGenerator(ReadCertificate rc, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) throws Exception {
-        if (iName == null || sName == null) {
-            System.out.println("Issuer or subject Name missing (both are necessary to generate the certificate");
-            System.exit(1);
-        } else {
-            Date stDate = defaultDate(sDate, dStDate);
-            Date exDate = defaultDate(eDate, dExDate);
-            keys = defaultInt(keys, dKeys, 512);
-            serNumber = defaultLong(serNumber, dSerNumber, 0);
-            certName = defaultString(certName, dCertName);
-            signAlg = defaultString(signAlg, dSignAlg);
-            pFile = defaultString(pFile, dPathFile);
+    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) throws Exception {
+        iName = defaultString(iName, dIssuerName);
+        sName = defaultString(sName, dSubjectName);
+        Date stDate = defaultDate(sDate, dStDate);
+        Date exDate = defaultDate(eDate, dExDate);
+        keys = defaultInt(keys, dKeys, 512);
+        serNumber = defaultLong(serNumber, dSerNumber, 1);
+        certName = defaultString(certName, dCertName);
+        signAlg = defaultString(signAlg, dSignAlg);
+        pFile = defaultString(pFile, dPathFile);
 
-            pFile = pFile + "/";
+        pFile = pFile + "/";
 
 
-            //-----+
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
-            keyGen.initialize(keys);                                              // the keysize
-            KeyPair keypair = keyGen.generateKeyPair();                           // generate the keypair
-            //-----+
+        //-----+
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
+        keyGen.initialize(keys);                                              // the keysize
+        KeyPair keypair = keyGen.generateKeyPair();                           // generate the keypair
+        //-----+
 
-            File file = new File(pFile + certName + ".crt");
+        File file = new File(pFile + certName + ".crt");
 
-            rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
+        rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
 
-            if (bRead) {
-                rc.printCertDataToConsole(rc.read(file));
-            }
+        if (bRead) {
+            rc.printCertDataToConsole(rc.read(file));
         }
+
     }
 
     /**
      * Starts the Certificate reader. Needs all default values for the reading parameters.
-     * @param rc ReadCertificate class object that's needed to start the Certificate reader in the that Class
+     *
+     * @param rc        ReadCertificate class object that's needed to start the Certificate reader in the that Class
      * @param dPathFile Default path file the Certificate reader should use if it isn't set
-     * @throws IOException If the Reader throws an IOException
+     * @param dCertName Default name of the Certificate
+     * @throws IOException          If the Reader throws an IOException
      * @throws CertificateException If the Reader throws a Certificate Exception
      */
-    public void startReader(ReadCertificate rc, String dPathFile) throws IOException, CertificateException {
-        if (certName == null) {
-            System.out.println("The filename is missing (is necessary to read the certificate");
-            System.exit(1);
-        } else {
-            if (pFile == null) {
-                pFile = dPathFile;
-            }
-            File file = new File(pFile + certName + ".crt");
-            rc.printCertDataToConsole(rc.read(file));
-        }
+    public void startReader(ReadCertificate rc, String dPathFile, String dCertName) throws IOException, CertificateException {
+        defaultString(certName ,dCertName);
+        defaultString(pFile, dPathFile);
+        File file = new File(pFile + certName + ".crt");
+        rc.printCertDataToConsole(rc.read(file));
     }
 
-    public static void readProperties(){
+    /**
+     * Reads the config.properties file in the main project folder
+     *
+     * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
+     */
+    public static Properties readProperties() {
         Properties prop = new Properties();
-        OutputStream output = null;
+        InputStream input = null;
 
         try {
+            input = new FileInputStream("config.properties");
+            //TODO split try-catch and in case of an "File not found"-Exception generate a file with the default values
 
-            output = new FileOutputStream("config.properties");
+            prop.load(input);
 
-            // set the properties value
-            prop.setProperty("first", "value_1");
-            prop.setProperty("second", "value_2");
-            prop.setProperty("third", "value_3");
-
-            // save properties to project root folder
-            prop.store(output, null);
-
-        } catch (IOException io) {
-            io.printStackTrace();
+        } catch (IOException ex) {
+            System.err.println("[ERROR] config.properties couldn't be found");
+            System.out.println("[INFO] using the default values");
         } finally {
-            if (output != null) {
+            if (input != null) {
                 try {
-                    output.close();
+                    input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-
         }
+        return prop;
     }
 }
+/*
+prop.setProperty("defaultIssuerName", "ca_name");
+prop.setProperty("defaultSubjectName", "owner_name");
+prop.setProperty("defaultHeySize", "4096");
+prop.setProperty("defaultSerialNumber","default");
+prop.setProperty("defaultStDate", "default");
+prop.setProperty("defaultExDate", "default");
+prop.setProperty("defaultValidity","default");
+prop.setProperty("defaultCertificateFileName", "generated_certificate");
+prop.setProperty("defaultPathFile","src/main/resources");
+prop.setProperty("defaultSignatureAlgorithm","SHA256withRSA");
+ */
