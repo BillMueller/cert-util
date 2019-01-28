@@ -18,4 +18,5 @@ target/
 .vagrant
 *.retry
 
-
+# custom
+*.crt

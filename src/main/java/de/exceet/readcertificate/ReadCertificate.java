@@ -16,30 +16,6 @@ import java.util.List;
 
 public class ReadCertificate {
     /**
-     * The function stringToDate() converts a String (i) into a date value. Important for that is, that the String got
-     * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
-     * return the date in "Date" format.
-     *
-     * @param i String: Input
-     * @return Date:   Output
-     */
-    public Date stringToDate(String i) {
-        int d = 0, y = 0, m = 0;
-        try {
-            String[] sa = i.split("");
-            d = (Integer.valueOf(sa[0])) * 10 + (Integer.valueOf(sa[1]));
-            m = (Integer.valueOf(sa[3])) * 10 + (Integer.valueOf(sa[4]));
-            y = (Integer.valueOf(sa[6])) * 1000 + (Integer.valueOf(sa[7])) * 100 + (Integer.valueOf(sa[8])) * 10 + (Integer.valueOf(sa[9]));
-        } catch (Exception e) {
-            // out.println(e);
-            System.exit(1);
-        }
-        Date o = new GregorianCalendar(y, m - 1, d).getTime();
-        // out.println(o);
-        return o;
-    }
-
-    /**
      * The function write() generates a certificate out of the inputs and saves it into the file (File file).
      *
      * @param file               File:       file where the certificate will be saved

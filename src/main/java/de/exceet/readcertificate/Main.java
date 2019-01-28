@@ -7,6 +7,7 @@ import java.io.File;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class Main {
     @Parameter(names = {"-generate", "-g"}, description = "generate a new certificate", help = true)
@@ -65,10 +66,11 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public void run() throws Exception {
+        // TODO create and read config file
         ReadCertificate rc = new ReadCertificate();
         Date dExDate = new Date();
         long milSecValid = 31536000000L;                                    // default time in milliseconds the certificate is valid after generating it
-        String dPathFile = "C:/Users/jvansprang/Desktop/Certificates/";     // default pathfile
+        String dPathFile = "C:/Users/jvansprang/Desktop/Certificates";     // default pathfile
         String dCertName = "mycertificate";                                 // default certificate name
         Date dStDate = new Date();                                          // default startdate
         dExDate.setTime(dExDate.getTime() + milSecValid);                   // default expriydate
@@ -79,19 +81,10 @@ public class Main {
         Date stDate, exDate;
         if (help || gHelp) {
             if (gen || gHelp) {
-                System.out.println("-generate --iName <CA-name> --sName <owner-name>\t[generates a certificate]");
-                System.out.println("\t--startDate\t\t\t\t<start date of the certificate>");
-                System.out.println("\t--expiryDate\t\t\t<expiry date of the certificate>");
-                System.out.println("\t--keySize\t\t\t\t<size of the public key in bits>");
-                System.out.println("\t--serialNumber\t\t\t<serial number of the certificate>");
-                System.out.println("\t--signatureAlgorithm\t<signature algorithm>");
-                System.out.println("\t--file\t\t\t\t\t<name of the generated certificate>");
-                System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate>");
-                System.out.println("\t--read");
+                printHelp(0);
             }
             if (read || gHelp) {
-                System.out.println("-read --file <name of the file to read>\t[reads a certificate]");
-                System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate to read>");
+                printHelp(1);
             }
         }
         if (help != true && gen == true) {
@@ -99,33 +92,16 @@ public class Main {
                 System.out.println("Issuer or subject Name missing (both are necessary to generate the certificate");
                 System.exit(1);
             } else {
-                if (sDate == null) {
-                    stDate = dStDate;
-                } else {
-                    stDate = rc.stringToDate(sDate);
-                }
-                if (eDate == null) {
-                    exDate = dExDate;
-                } else {
-                    exDate = rc.stringToDate(eDate);
-                }
-                if (keys < 512) {
-                    keys = dKeys;
-                }
-                if (serNumber == 0) {
-                    serNumber = dSerNumber;
-                }
-                if (certName == null) {
-                    certName = dCertName;
-                }
-                if (signAlg == null) {
-                    signAlg = dSignAlg;
-                }
-                if (pFile == null) {
-                    pFile = dPathFile;
-                } else {
-                    pFile = pFile + "/";
-                }
+                stDate = defaultDate(sDate, dStDate);
+                exDate = defaultDate(eDate, dExDate);
+                keys = defaultInt(keys, dKeys, 512);
+                serNumber = defaultLong(serNumber, dSerNumber, 0);
+                certName = defaultString(certName, dCertName);
+                signAlg = defaultString(signAlg, dSignAlg);
+                pFile = defaultString(pFile, dPathFile);
+
+                pFile = pFile + "/";
+
 
                 //-----+
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
@@ -157,4 +133,115 @@ public class Main {
 
     }
 
+    /**
+     * Prints out the help for the command.
+     *
+     * @param x Tells the function the help of what command it should print<br>
+     *          (0 = -generate, 1 = -read)
+     */
+    public void printHelp(int x) {
+        if (x == 0) {
+            System.out.println("-generate --iName <CA-name> --sName <owner-name>\t[generates a certificate]");
+            System.out.println("\t--startDate\t\t\t\t<start date of the certificate>");
+            System.out.println("\t--expiryDate\t\t\t<expiry date of the certificate>");
+            System.out.println("\t--keySize\t\t\t\t<size of the public key in bits>");
+            System.out.println("\t--serialNumber\t\t\t<serial number of the certificate>");
+            System.out.println("\t--signatureAlgorithm\t<signature algorithm>");
+            System.out.println("\t--file\t\t\t\t\t<name of the generated certificate>");
+            System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate>");
+            System.out.println("\t--read");
+        } else if (x == 1) {
+            System.out.println("-read --file <name of the file to read>\t[reads a certificate]");
+            System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate to read>");
+        }
+    }
+
+    /**
+     * Tests if the String in is set.
+     *
+     * @param in The input String
+     * @param d  The default value for the input String
+     * @return If in != null -> in <br>
+     * If in == null -> d
+     */
+    public String defaultString(String in, String d) {
+        if (in == null) {
+            in = d;
+        }
+        return in;
+    }
+
+    /**
+     * Tests if the int in is bigger than the int val.
+     *
+     * @param in  The input String
+     * @param d   The default value for the input String
+     * @param val The test value
+     * @return If in > val -> in<br>
+     * If in <= val -> d
+     */
+    public int defaultInt(int in, int d, int val) {
+        if (in < val) {
+            in = d;
+        }
+        return in;
+    }
+
+    /**
+     * Tests if the int in is bigger than the int val.
+     *
+     * @param in  The input String
+     * @param d   The default value for the input String
+     * @param val The test value
+     * @return If in > val -> in<br>
+     * If in <= val -> d
+     */
+    public long defaultLong(long in, long d, int val) {
+        if (in < val) {
+            in = d;
+        }
+        return in;
+    }
+
+    /**
+     * Tests if the String in is set.
+     *
+     * @param in The input String
+     * @param d  The default value for the input String
+     * @return If in != null -> in <br>
+     * If in == null -> d
+     */
+    public Date defaultDate(String in, Date d) {
+        Date out;
+        if (in == null) {
+            out = d;
+        } else {
+            out = stringToDate(in);
+        }
+        return out;
+    }
+
+    /**
+     * The function stringToDate() converts a String (i) into a date value. Important for that is, that the String got
+     * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
+     * return the date in "Date" format.
+     *
+     * @param i String: Input
+     * @return Date:   Output
+     */
+    public Date stringToDate(String i) {
+        int d = 0, y = 0, m = 0;
+        try {
+            String[] sa = i.split("");
+            d = (Integer.valueOf(sa[0])) * 10 + (Integer.valueOf(sa[1]));
+            m = (Integer.valueOf(sa[3])) * 10 + (Integer.valueOf(sa[4]));
+            y = (Integer.valueOf(sa[6])) * 1000 + (Integer.valueOf(sa[7])) * 100 + (Integer.valueOf(sa[8])) * 10 + (Integer.valueOf(sa[9]));
+        } catch (Exception e) {
+            // out.println(e);
+            System.exit(1);
+        }
+        Date o = new GregorianCalendar(y, m - 1, d).getTime();
+        // out.println(o);
+        return o;
+    }
 }
