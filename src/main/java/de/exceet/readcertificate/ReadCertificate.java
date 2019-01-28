@@ -116,7 +116,6 @@ public class ReadCertificate {
         boolean dateVal;
         List<String> output = new ArrayList<String>();
 
-
         // test if the certificate is still valid
         if (testDate(date1, date2)) {
             // if it is valid -> set dateshow to ""
