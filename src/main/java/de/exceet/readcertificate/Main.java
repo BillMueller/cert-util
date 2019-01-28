@@ -3,9 +3,12 @@ package de.exceet.readcertificate;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
+import javax.security.cert.CertificateException;
 import java.io.File;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -88,47 +91,10 @@ public class Main {
             }
         }
         if (help != true && gen == true) {
-            if (iName == null || sName == null) {
-                System.out.println("Issuer or subject Name missing (both are necessary to generate the certificate");
-                System.exit(1);
-            } else {
-                stDate = defaultDate(sDate, dStDate);
-                exDate = defaultDate(eDate, dExDate);
-                keys = defaultInt(keys, dKeys, 512);
-                serNumber = defaultLong(serNumber, dSerNumber, 0);
-                certName = defaultString(certName, dCertName);
-                signAlg = defaultString(signAlg, dSignAlg);
-                pFile = defaultString(pFile, dPathFile);
-
-                pFile = pFile + "/";
-
-
-                //-----+
-                KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
-                keyGen.initialize(keys);                                              // the keysize
-                KeyPair keypair = keyGen.generateKeyPair();                           // generate the keypair
-                //-----+
-
-                File file = new File(pFile + certName + ".crt");
-
-                rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
-
-                if (bRead) {
-                    rc.printCertDataToConsole(rc.read(file));
-                }
-            }
+            startGenerator(rc, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
         }
         if (read && help != true) {
-            if (certName == null) {
-                System.out.println("The filename is missing (is necessary to read the certificate");
-                System.exit(1);
-            } else {
-                if (pFile == null) {
-                    pFile = dPathFile;
-                }
-                File file = new File(pFile + certName + ".crt");
-                rc.printCertDataToConsole(rc.read(file));
-            }
+            startReader(rc, dPathFile);
         }
 
     }
@@ -226,8 +192,8 @@ public class Main {
      * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
      * return the date in "Date" format.
      *
-     * @param i String: Input
-     * @return Date:   Output
+     * @param i String in DD-MM-YYYY format
+     * @return Date in Date format as output
      */
     public Date stringToDate(String i) {
         int d = 0, y = 0, m = 0;
@@ -243,5 +209,69 @@ public class Main {
         Date o = new GregorianCalendar(y, m - 1, d).getTime();
         // out.println(o);
         return o;
+    }
+
+    /**
+     * Starts the Certificate generator. Needs all default values for the Certificate parameters.
+     * @param rc ReadCertificate class object that's needed to start the Certificate generator in the that Class
+     * @param dStDate Default start date the Certificate generator should use if it isn't set
+     * @param dExDate Default expiry date the Certificate generator should use if it isn't set
+     * @param dKeys Default key size the Certificate generator should use if it isn't set
+     * @param dSerNumber Default serial number the Certificate generator should use if it isn't set
+     * @param dCertName Default certificate filename the Certificate generator should use if it isn't set
+     * @param dSignAlg Default signature algorithm the Certificate generator should use if it isn't set
+     * @param dPathFile Default path file the Certificate generator should use if it isn't set
+     * @throws Exception If the Generator throws an Exception
+     */
+    public void startGenerator(ReadCertificate rc, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) throws Exception {
+        if (iName == null || sName == null) {
+            System.out.println("Issuer or subject Name missing (both are necessary to generate the certificate");
+            System.exit(1);
+        } else {
+            Date stDate = defaultDate(sDate, dStDate);
+            Date exDate = defaultDate(eDate, dExDate);
+            keys = defaultInt(keys, dKeys, 512);
+            serNumber = defaultLong(serNumber, dSerNumber, 0);
+            certName = defaultString(certName, dCertName);
+            signAlg = defaultString(signAlg, dSignAlg);
+            pFile = defaultString(pFile, dPathFile);
+
+            pFile = pFile + "/";
+
+
+            //-----+
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
+            keyGen.initialize(keys);                                              // the keysize
+            KeyPair keypair = keyGen.generateKeyPair();                           // generate the keypair
+            //-----+
+
+            File file = new File(pFile + certName + ".crt");
+
+            rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
+
+            if (bRead) {
+                rc.printCertDataToConsole(rc.read(file));
+            }
+        }
+    }
+
+    /**
+     * Starts the Certificate reader. Needs all default values for the reading parameters.
+     * @param rc ReadCertificate class object that's needed to start the Certificate reader in the that Class
+     * @param dPathFile Default path file the Certificate reader should use if it isn't set
+     * @throws IOException If the Reader throws an IOException
+     * @throws CertificateException If the Reader throws a Certificate Exception
+     */
+    public void startReader(ReadCertificate rc, String dPathFile) throws IOException, CertificateException {
+        if (certName == null) {
+            System.out.println("The filename is missing (is necessary to read the certificate");
+            System.exit(1);
+        } else {
+            if (pFile == null) {
+                pFile = dPathFile;
+            }
+            File file = new File(pFile + certName + ".crt");
+            rc.printCertDataToConsole(rc.read(file));
+        }
     }
 }
