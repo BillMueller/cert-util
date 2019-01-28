@@ -5,12 +5,14 @@ import com.beust.jcommander.Parameter;
 
 import javax.security.cert.CertificateException;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Properties;
 
 public class Main {
     @Parameter(names = {"-generate", "-g"}, description = "generate a new certificate", help = true)
@@ -51,12 +53,15 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public static void main(String[] argv) throws Exception {
+        readProperties();
+        /*
         Main main = new Main();
         JCommander.newBuilder()
                 .addObject(main)
                 .build()
                 .parse(argv);
         main.run();
+        */
     }
 
     /**
@@ -272,6 +277,36 @@ public class Main {
             }
             File file = new File(pFile + certName + ".crt");
             rc.printCertDataToConsole(rc.read(file));
+        }
+    }
+
+    public static void readProperties(){
+        Properties prop = new Properties();
+        OutputStream output = null;
+
+        try {
+
+            output = new FileOutputStream("config.properties");
+
+            // set the properties value
+            prop.setProperty("first", "value_1");
+            prop.setProperty("second", "value_2");
+            prop.setProperty("third", "value_3");
+
+            // save properties to project root folder
+            prop.store(output, null);
+
+        } catch (IOException io) {
+            io.printStackTrace();
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
     }
 }
