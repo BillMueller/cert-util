@@ -16,17 +16,17 @@ import java.util.List;
 
 
 public class TestReadCertificate {
-    public final String RESET = "\u001B[0m";
-    public final String YELLOW = "\u001B[33m";
+    public static final String RESET = "\u001B[0m";
+    public static final String YELLOW = "\u001B[93m";
 
     @Test
     public void test() {
         Main main = new Main();
         ReadCertificate rc = new ReadCertificate();
 
-        testRead(main, rc, new ArrayList<>());
+        testRead(main, rc, new ArrayList<String>());
 
-        testWrite(rc, new ArrayList<>());
+        testWrite(rc, new ArrayList<String>());
 
         testReadProperties(main);
     }
@@ -44,10 +44,10 @@ public class TestReadCertificate {
         try {
             testRead = rc.read(new File("src/test/resources/testCertificate.crt"));
         } catch (IOException ioe) {
-            main.sErr("[ERROR] IOException");
+            main.soY("[ERROR] IOException");
             ioe.printStackTrace();
         } catch (CertificateException ce) {
-            main.sErr("[ERROR] Missing the certificate test file or wrong path file");
+            main.soY("[ERROR] Missing the certificate test file or wrong path file");
             ce.printStackTrace();
         }
         //----+

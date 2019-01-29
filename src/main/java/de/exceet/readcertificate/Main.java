@@ -12,8 +12,6 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 
 public class Main {
-    public final String RESET = "\u001B[0m";
-    public final String RED = "\u001B[31m";
 
     @Parameter(names = {"-generate", "-g"}, description = "generate a new certificate", help = true)
     public boolean gen;
@@ -44,6 +42,8 @@ public class Main {
     public String pFile;
     @Parameter(names = "--help", description = "prints out a help for the command entered before")
     public boolean help;
+    @Parameter(names = "--config", description = "set a config file")
+    public String cFile;
 
 
     /**
@@ -80,10 +80,11 @@ public class Main {
                 printHelp(1);
             }
         } else {
+            String defaultConfigFileName = "config.properties";
+            cFile = defaultString(cFile, defaultConfigFileName);
             ReadCertificate rc = new ReadCertificate();
-            String configFileName = "config.properties";
 
-            Properties dProps = readProperties(configFileName, true);
+            Properties dProps = readProperties(cFile, true);
             String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
             String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
             int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
@@ -309,24 +310,33 @@ public class Main {
         if(printMsg)
         System.out.println("[INFO] loading config.properties");
         Properties prop = new Properties();
+        InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName);
 
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName)) {
+        try {
             if (input != null)
                 prop.load(input);
             else
-                throw new IOException("[ERROR] " + configFileName +" couldn't be found");
+                throw new IOException();
 
             System.out.println("[INFO] successfully loaded settings from config.properties");
 
         } catch (IOException ex) {
             if(printMsg) {
-                sErr(ex.getMessage());
+                soY("[ERROR] Config file couldn't be found");
                 System.out.println("[INFO] using the default values");
+            }
+        }finally {
+            if(input != null){
+                try{
+                    input.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
         return prop;
     }
-    public void sErr(String msg){
-        System.out.println(RED + msg + RESET);
+    public void soY(String msg) {
+        System.out.println(msg);
     }
 }
