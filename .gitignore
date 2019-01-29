@@ -20,3 +20,5 @@ target/
 
 # custom
 *.crt
+
+dependency-reduced-pom.xml

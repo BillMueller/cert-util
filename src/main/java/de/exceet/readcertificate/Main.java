@@ -12,6 +12,9 @@ import java.util.GregorianCalendar;
 import java.util.Properties;
 
 public class Main {
+    public final String RESET = "\u001B[0m";
+    public final String RED = "\u001B[31m";
+
     @Parameter(names = {"-generate", "-g"}, description = "generate a new certificate", help = true)
     public boolean gen;
     @Parameter(names = {"-read", "-r"}, description = "read a certificate", help = true)
@@ -29,7 +32,7 @@ public class Main {
     public String eDate;
     @Parameter(names = "--keySize", description = "keySize of the public key (in bits)")
     public int keys;
-    @Parameter(names = {"--serialNumber", "--serNumber"}, description = "set a serial number")
+    @Parameter(names = {"--serialNumber", "--serNumb"}, description = "set a serial number")
     public long serNumber;
     @Parameter(names = "--file", description = "set the certificate name")
     public String certName;
@@ -37,7 +40,7 @@ public class Main {
     public String signAlg;
     @Parameter(names = "--read", description = "decide if you want to read the certificate after generating it")
     public boolean bRead;
-    @Parameter(names = {"--pathfile", "--pfile"}, description = "set the pathfile")
+    @Parameter(names = {"--pathFile", "--pFile"}, description = "set the path file")
     public String pFile;
     @Parameter(names = "--help", description = "prints out a help for the command entered before")
     public boolean help;
@@ -46,15 +49,16 @@ public class Main {
     /**
      * Main function starts the JController and calls the function run().
      *
-     * @param argv
+     * @param args Arguments given when running the main function
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
-    public static void main(String[] argv) throws Exception {
+    public static void main(String[] args) throws Exception {
         Main main = new Main();
-        JCommander.newBuilder()
-                .addObject(main)
-                .build()
-                .parse(argv);
+        //TestJCom tjc = new TestJCom();
+        JCommander jc = JCommander.newBuilder().addObject(main).build();
+        jc.parse(args);
+        //tjc.printout();
+        // Files.copy(Paths.get("meineDatei"));
         main.run();
     }
 
@@ -75,10 +79,11 @@ public class Main {
             if (read || gHelp) {
                 printHelp(1);
             }
-        }else {
+        } else {
             ReadCertificate rc = new ReadCertificate();
+            String configFileName = "config.properties";
 
-            Properties dProps = readProperties();
+            Properties dProps = readProperties(configFileName, true);
             String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
             String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
             int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
@@ -98,7 +103,7 @@ public class Main {
             } else {
                 dStDate = stringToDate(dPropsStDate);
             }
-            if (dPropsValidity.equals("default") == false) {
+            if (!dPropsValidity.equals("default")) {
                 milSecValid = Long.valueOf(dPropsValidity);
             }
             if (dPropsExDate.equals("default")) {
@@ -111,11 +116,10 @@ public class Main {
             } else {
                 dSerNumber = Long.valueOf(dPropsSerNumber);
             }
-
-            if (help != true && gen == true) {
+            if (!help && gen) {
                 startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
             }
-            if (read && help != true) {
+            if (read && !help) {
                 startReader(rc, dPathFile, dCertName);
             }
         }
@@ -290,40 +294,39 @@ public class Main {
      * @throws CertificateException If the Reader throws a Certificate Exception
      */
     public void startReader(ReadCertificate rc, String dPathFile, String dCertName) throws IOException, CertificateException {
-        defaultString(certName ,dCertName);
-        defaultString(pFile, dPathFile);
-        File file = new File(pFile + certName + ".crt");
+        certName = defaultString(certName, dCertName);
+        pFile = defaultString(pFile, dPathFile);
+        File file = new File(pFile + "/" + certName + ".crt");
         rc.printCertDataToConsole(rc.read(file));
     }
 
     /**
      * Reads the config.properties file in the main project folder
+     *
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
-    public static Properties readProperties() {
+    public Properties readProperties(String configFileName, boolean printMsg) {
+        if(printMsg)
         System.out.println("[INFO] loading config.properties");
         Properties prop = new Properties();
-        InputStream input = null;
 
-        try {
-            input = new FileInputStream("config.properties");
-
-            prop.load(input);
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName)) {
+            if (input != null)
+                prop.load(input);
+            else
+                throw new IOException("[ERROR] " + configFileName +" couldn't be found");
 
             System.out.println("[INFO] successfully loaded settings from config.properties");
 
         } catch (IOException ex) {
-            System.err.println("[ERROR] config.properties couldn't be found");
-            System.out.println("[INFO] using the default values");
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            if(printMsg) {
+                sErr(ex.getMessage());
+                System.out.println("[INFO] using the default values");
             }
         }
         return prop;
+    }
+    public void sErr(String msg){
+        System.out.println(RED + msg + RESET);
     }
 }
