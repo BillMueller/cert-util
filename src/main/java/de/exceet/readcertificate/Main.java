@@ -50,7 +50,6 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public static void main(String[] argv) throws Exception {
-        System.out.println("[INFO] Starting the program");
         Main main = new Main();
         JCommander.newBuilder()
                 .addObject(main)
@@ -299,7 +298,6 @@ public class Main {
 
     /**
      * Reads the config.properties file in the main project folder
-     *
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
     public static Properties readProperties() {
@@ -309,7 +307,6 @@ public class Main {
 
         try {
             input = new FileInputStream("config.properties");
-            //TODO split try-catch and in case of an "File not found"-Exception generate a file with the default values
 
             prop.load(input);
 
@@ -330,15 +327,3 @@ public class Main {
         return prop;
     }
 }
-/*
-prop.setProperty("defaultIssuerName", "ca_name");
-prop.setProperty("defaultSubjectName", "owner_name");
-prop.setProperty("defaultHeySize", "4096");
-prop.setProperty("defaultSerialNumber","default");
-prop.setProperty("defaultStDate", "default");
-prop.setProperty("defaultExDate", "default");
-prop.setProperty("defaultValidity","default");
-prop.setProperty("defaultCertificateFileName", "generated_certificate");
-prop.setProperty("defaultPathFile","src/main/resources");
-prop.setProperty("defaultSignatureAlgorithm","SHA256withRSA");
- */
