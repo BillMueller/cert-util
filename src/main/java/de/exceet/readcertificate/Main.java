@@ -7,9 +7,7 @@ import javax.security.cert.CertificateException;
 import java.io.*;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Properties;
+import java.util.*;
 
 public class Main {
 
@@ -19,6 +17,8 @@ public class Main {
     public boolean read;
     @Parameter(names = {"-help", "-h"}, description = "prints out a help for the command entered before", help = true)
     public boolean gHelp;
+    @Parameter(names = {"-exit", "-e"}, description = "exits J-Console", help = true)
+    public static boolean exit;
     //-------------------------------+
     @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
     public String iName;
@@ -45,21 +45,24 @@ public class Main {
     @Parameter(names = "--config", description = "set a config path file")
     public String cFile;
 
-
-    /**
-     * Main function starts the JController and calls the function run().
-     *
-     * @param args Arguments given when running the main function
-     * @throws Exception Needed if one of the next functions throws an Exeption
-     */
     public static void main(String[] args) throws Exception {
         Main main = new Main();
-        //TestJCom tjc = new TestJCom();
-        JCommander jc = JCommander.newBuilder().addObject(main).build();
-        jc.parse(args);
-        //tjc.printout();
-        // Files.copy(Paths.get("meineDatei"));
-        main.run();
+        Scanner sc = new Scanner(System.in);
+        String in;
+        JCommander jc;
+        String[] sin; //args.clone();
+        exit = false;
+        while (!exit) {
+            main.setToDefault();
+            System.out.print("[J-CONSOLE] ");
+            in = sc.nextLine();
+            sin = in.split(" ");
+            jc = JCommander.newBuilder().addObject(main).build();
+            jc.parse(sin);
+            main.run();
+        }
+        System.out.println("[J-CONSOLE] exiting ...");
+        sc.close();
     }
 
     /**
@@ -72,60 +75,59 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public void run() throws Exception {
-        if (help || gHelp) {
-            if (gen || gHelp) {
-                printHelp(0);
-            }
-            if (read || gHelp) {
-                printHelp(1);
-            }
-        } else {
-            String defaultConfigFileName = "config.properties";
-            cFile = defaultString(cFile, "");
-            ReadCertificate rc = new ReadCertificate();
-
-            Properties dProps = readProperties(cFile + "/" + defaultConfigFileName, true, cFile.equals(""));
-
-            String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-            String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-            int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
-            String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-            String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-            String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-            String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-            String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
-            String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
-            String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-
-            Date dStDate, dExDate = new Date();
-            long milSecValid = 31536000000L, dSerNumber;
-
-            if (dPropsStDate.equals("default")) {
-                dStDate = new Date();
+        if (!exit) {
+            if (help || gHelp) {
+                if (gen || gHelp) {
+                    printHelp(0);
+                }
+                if (read || gHelp) {
+                    printHelp(1);
+                }
             } else {
-                dStDate = stringToDate(dPropsStDate);
-            }
-            if (!dPropsValidity.equals("default")) {
-                milSecValid = Long.valueOf(dPropsValidity);
-            }
-            if (dPropsExDate.equals("default")) {
-                dExDate.setTime(dStDate.getTime() + milSecValid);
-            } else {
-                dExDate = stringToDate(dPropsExDate);
-            }
-            if (dPropsSerNumber.equals("default")) {
-                dSerNumber = new Date().getTime();
-            } else {
-                dSerNumber = Long.valueOf(dPropsSerNumber);
-            }
-            if (!help && gen) {
-                startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
-            }
-            if (read && !help) {
-                startReader(rc, dPathFile, dCertName);
+                String defaultConfigFileName = "config.properties";
+                cFile = defaultString(cFile, "");
+                ReadCertificate rc = new ReadCertificate();
+
+                Properties dProps = readProperties(cFile + "/" + defaultConfigFileName, true, cFile.equals(""));
+
+                String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+                String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+                int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
+                String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+                String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+                String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+                String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+                String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
+                String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
+                String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+
+                Date dStDate, dExDate = new Date();
+                long milSecValid = 31536000000L, dSerNumber;
+
+                if (dPropsStDate.equals("default"))
+                    dStDate = new Date();
+                else
+                    dStDate = stringToDate(dPropsStDate);
+
+                if (!dPropsValidity.equals("default"))
+                    milSecValid = Long.valueOf(dPropsValidity);
+
+                if (dPropsExDate.equals("default"))
+                    dExDate.setTime(dStDate.getTime() + milSecValid);
+                else
+                    dExDate = stringToDate(dPropsExDate);
+
+                if (dPropsSerNumber.equals("default"))
+                    dSerNumber = new Date().getTime();
+                else
+                    dSerNumber = Long.valueOf(dPropsSerNumber);
+
+                if (!help && gen)
+                    startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
+                if (read && !help)
+                    startReader(rc, dPathFile, dCertName);
             }
         }
-
     }
 
     /**
@@ -342,7 +344,7 @@ public class Main {
                 System.out.println("[INFO] successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
-                if(printMsg)
+                if (printMsg)
                     ex.printStackTrace();
             }
         }
@@ -356,5 +358,24 @@ public class Main {
             System.out.println("[WARNING] The name of the config file must be config.properties");
             System.out.println("[INFO] using default config.properties file");
         }
+    }
+
+    public void setToDefault() {
+        gen = false;
+        read = false;
+        gHelp = false;
+        //-------+
+        iName = null;
+        sName = null;
+        sDate = null;
+        eDate = null;
+        keys = 0;
+        serNumber = 0L;
+        certName = null;
+        signAlg = null;
+        bRead = false;
+        pFile = null;
+        help = false;
+        cFile = null;
     }
 }
