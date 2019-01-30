@@ -5,8 +5,8 @@ import com.beust.jcommander.Parameter;
 
 import javax.security.cert.CertificateException;
 import java.io.*;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import java.security.*;
+import java.security.cert.CertificateEncodingException;
 import java.util.*;
 
 public class Main {
@@ -45,7 +45,7 @@ public class Main {
     @Parameter(names = "--config", description = "set a config path file")
     public String cFile;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args){
         Main main = new Main();
         Scanner sc = new Scanner(System.in);
         String in;
@@ -57,7 +57,7 @@ public class Main {
             System.out.print("[INPUT] J-CONSOLE> ");
             in = sc.nextLine();
             sin = in.split(" ");
-            if (!in.equals("") || in.equals(" ")) {
+            if (sin.length != 0 && !in.equals("")) {
                 try {
                     jc = JCommander.newBuilder().addObject(main).build();
                     jc.parse(sin);
@@ -69,6 +69,7 @@ public class Main {
         }
         System.out.println("[INFO] exiting ...");
         sc.close();
+
     }
 
     /**
@@ -80,7 +81,7 @@ public class Main {
      *
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
-    public void run() throws Exception {
+    public void run() {
         if (!exit || (exit && help)) {
             if (help || gHelp) {
                 if (gen || gHelp) {
@@ -277,7 +278,7 @@ public class Main {
      * @param dPathFile  Default path file the Certificate generator should use if it isn't set
      * @throws Exception If the Generator throws an Exception
      */
-    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) throws Exception {
+    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile){
         System.out.println("[INFO] checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
@@ -293,18 +294,39 @@ public class Main {
 
         System.out.println("[INFO] generating key pair");
 
-        //-----+
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");        // select the altgorithm type
-        keyGen.initialize(keys);                                              // the keysize
-        KeyPair keypair = keyGen.generateKeyPair();                           // generate the keypair
-        //-----+
+        KeyPairGenerator keyGen = null;
+        try {
+            keyGen = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        keyGen.initialize(keys);
+        KeyPair keypair = keyGen.generateKeyPair();
 
         File file = new File(pFile + certName + ".crt");
 
-        rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
+        try {
+            rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
+        } catch (CertificateEncodingException e) {
+            System.out.println("[ERROR] Couldn't encode the certificate");
+        } catch (SignatureException e) {
+            System.out.println("[ERROR] Couldn't sign the certificate");
+        } catch (InvalidKeyException e) {
+            System.out.println("[ERROR] The generated key isn't valid");
+        } catch (IOException e) {
+            System.out.println("[ERROR] Couldn't write the certificate");
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("[ERROR] The entered algorithm is wrong");
+        }
 
         if (bRead) {
-            rc.printCertDataToConsole(rc.read(file));
+            try {
+                rc.printCertDataToConsole(rc.read(file));
+            } catch (IOException e) {
+                System.out.println("[ERROR] Couldn't find the certificate to read");
+            } catch (CertificateException e) {
+                System.out.println("[ERROR] Couldn't read the certificate");
+            }
         }
 
     }
@@ -318,11 +340,17 @@ public class Main {
      * @throws IOException          If the Reader throws an IOException
      * @throws CertificateException If the Reader throws a Certificate Exception
      */
-    public void startReader(ReadCertificate rc, String dPathFile, String dCertName) throws IOException, CertificateException {
+    public void startReader(ReadCertificate rc, String dPathFile, String dCertName){
         certName = defaultString(certName, dCertName);
         pFile = defaultString(pFile, dPathFile);
         File file = new File(pFile + "/" + certName + ".crt");
-        rc.printCertDataToConsole(rc.read(file));
+        try {
+            rc.printCertDataToConsole(rc.read(file));
+        } catch (IOException e) {
+            System.out.println("[ERROR] Couldn't find the certificate to read");
+        } catch (CertificateException e) {
+            System.out.println("[ERROR] Couldn't read the certificate");
+        }
     }
 
     /**

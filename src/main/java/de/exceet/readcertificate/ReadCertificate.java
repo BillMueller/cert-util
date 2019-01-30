@@ -7,7 +7,11 @@ import sun.security.provider.X509Factory;
 import javax.security.auth.x500.X500Principal;
 import java.io.*;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,7 +31,7 @@ public class ReadCertificate {
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
      * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(File file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm) throws Exception {
+    public void write(File file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
 
         System.out.println("[INFO] starting certificate generator");
 
