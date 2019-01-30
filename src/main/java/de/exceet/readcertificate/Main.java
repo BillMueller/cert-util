@@ -11,13 +11,13 @@ import java.util.*;
 
 public class Main {
 
-    @Parameter(names = {"-generate", "-g"}, description = "generate a new certificate", help = true)
+    @Parameter(names = "generate", description = "generate a new certificate", help = true)
     public boolean gen;
-    @Parameter(names = {"-read", "-r"}, description = "read a certificate", help = true)
+    @Parameter(names = "read", description = "read a certificate", help = true)
     public boolean read;
-    @Parameter(names = {"-help", "-h"}, description = "prints out a help for the command entered before", help = true)
+    @Parameter(names = "help", description = "prints out a help for the command entered before", help = true)
     public boolean gHelp;
-    @Parameter(names = {"-exit", "-e"}, description = "exits J-Console", help = true)
+    @Parameter(names = "exit", description = "exits J-Console", help = true)
     public static boolean exit;
     //-------------------------------+
     @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
@@ -54,14 +54,20 @@ public class Main {
         exit = false;
         while (!exit) {
             main.setToDefault();
-            System.out.print("[J-CONSOLE] ");
+            System.out.print("[INPUT] J-CONSOLE> ");
             in = sc.nextLine();
             sin = in.split(" ");
-            jc = JCommander.newBuilder().addObject(main).build();
-            jc.parse(sin);
-            main.run();
+            if (!in.equals("") || in.equals(" ")) {
+                try {
+                    jc = JCommander.newBuilder().addObject(main).build();
+                    jc.parse(sin);
+                    main.run();
+                } catch (com.beust.jcommander.ParameterException pe) {
+                    System.out.println("[ERROR] unknown command or parameters");
+                }
+            }
         }
-        System.out.println("[J-CONSOLE] exiting ...");
+        System.out.println("[INFO] exiting ...");
         sc.close();
     }
 
@@ -75,7 +81,7 @@ public class Main {
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
     public void run() throws Exception {
-        if (!exit) {
+        if (!exit || (exit && help)) {
             if (help || gHelp) {
                 if (gen || gHelp) {
                     printHelp(0);
@@ -83,12 +89,21 @@ public class Main {
                 if (read || gHelp) {
                     printHelp(1);
                 }
+                if (exit || gHelp) {
+                    printHelp(2);
+                    exit = false;
+                }
             } else {
                 String defaultConfigFileName = "config.properties";
                 cFile = defaultString(cFile, "");
                 ReadCertificate rc = new ReadCertificate();
+                Properties dProps;
 
-                Properties dProps = readProperties(cFile + "/" + defaultConfigFileName, true, cFile.equals(""));
+                if(cFile.equals("")) {
+                    dProps = readProperties(defaultConfigFileName, true, true);
+                }else{
+                    dProps = readProperties(cFile + "/" + defaultConfigFileName, true, false);
+                }
 
                 String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
                 String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
@@ -138,7 +153,7 @@ public class Main {
      */
     public void printHelp(int x) {
         if (x == 0) {
-            System.out.println("-generate\t\t\t[generates a certificate]");
+            System.out.println("generate\t\t\t[generates a certificate]");
             System.out.println("\t--issuerName\t\t<CA-name>");
             System.out.println("\t--subjectName\t\t<owner-name>");
             System.out.println("\t--startDate\t\t<start date of the certificate>");
@@ -151,9 +166,11 @@ public class Main {
             System.out.println("\t--config\t\t<set the pathfile of the config.properties file you want to use>");
             System.out.println("\t--read\t\t\t[enables read]");
         } else if (x == 1) {
-            System.out.println("-read \t\t\t\t[reads a certificate]");
+            System.out.println("read \t\t\t\t[reads a certificate]");
             System.out.println("\t--file\t\t\t<name of the file to read>");
             System.out.println("\t--pathFile\t\t<set the pathfile of the certificate to read>");
+        } else if (x == 2) {
+            System.out.println("exit \t\t\t\t[exits the console]");
         }
     }
 
@@ -332,7 +349,7 @@ public class Main {
                 System.out.println("[INFO] successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
-                printEx(printMsg, true, configFileName);
+                ex.printStackTrace();
             }
         } else {
             try (InputStream input = new FileInputStream(configFileName)) {
@@ -344,20 +361,15 @@ public class Main {
                 System.out.println("[INFO] successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
-                if (printMsg)
-                    ex.printStackTrace();
+                if (printMsg) {
+                    System.out.println("[ERROR] no file could be found at " + configFileName);
+                    System.out.println("[WARNING] The name of the config file must be config.properties");
+                    System.out.println("[INFO] using default config.properties file");
+
+                }
             }
         }
         return prop;
-    }
-
-    //TODO write a description
-    public void printEx(boolean p, boolean d, String fn) {
-        if (p && !d) {
-            System.out.println("[ERROR] no file could be found at " + fn);
-            System.out.println("[WARNING] The name of the config file must be config.properties");
-            System.out.println("[INFO] using default config.properties file");
-        }
     }
 
     public void setToDefault() {
