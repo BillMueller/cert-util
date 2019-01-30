@@ -10,6 +10,11 @@ import java.security.cert.CertificateEncodingException;
 import java.util.*;
 
 public class Main {
+    public final String ANSI_RESET = "\u001B[0m";
+    public final String ANSI_RED = "\u001B[91m";
+    public final String ANSI_GREEN = "\u001B[92m";
+    public final String ANSI_YELLOW = "\u001B[93m";
+    public final String ANSI_BLUE = "\u001B[94m";
 
     @Parameter(names = "generate", description = "generate a new certificate", help = true)
     public boolean gen;
@@ -40,12 +45,12 @@ public class Main {
     public boolean bRead;
     @Parameter(names = {"--pathFile", "--pFile"}, description = "set the path file")
     public String pFile;
-    @Parameter(names = "--help", description = "prints out a help for the command entered before")
+    @Parameter(names = {"--help","-h"}, description = "prints out a help for the command entered before")
     public boolean help;
     @Parameter(names = "--config", description = "set a config path file")
     public String cFile;
 
-    public static void main(String[] args){
+    public void startConsole() {
         Main main = new Main();
         Scanner sc = new Scanner(System.in);
         String in;
@@ -54,7 +59,7 @@ public class Main {
         exit = false;
         while (!exit) {
             main.setToDefault();
-            System.out.print("[INPUT] J-CONSOLE> ");
+            printConsole();
             in = sc.nextLine();
             sin = in.split(" ");
             if (sin.length != 0 && !in.equals("")) {
@@ -63,11 +68,11 @@ public class Main {
                     jc.parse(sin);
                     main.run();
                 } catch (com.beust.jcommander.ParameterException pe) {
-                    System.out.println("[ERROR] unknown command or parameters");
+                    printError("unknown command or parameters");
                 }
             }
         }
-        System.out.println("[INFO] exiting ...");
+        printInfo("exiting ...");
         sc.close();
 
     }
@@ -85,13 +90,13 @@ public class Main {
         if (!exit || (exit && help)) {
             if (help || gHelp) {
                 if (gen || gHelp) {
-                    printHelp(0);
+                    printHelpToConsole(0);
                 }
                 if (read || gHelp) {
-                    printHelp(1);
+                    printHelpToConsole(1);
                 }
                 if (exit || gHelp) {
-                    printHelp(2);
+                    printHelpToConsole(2);
                     exit = false;
                 }
             } else {
@@ -100,9 +105,9 @@ public class Main {
                 ReadCertificate rc = new ReadCertificate();
                 Properties dProps;
 
-                if(cFile.equals("")) {
+                if (cFile.equals("")) {
                     dProps = readProperties(defaultConfigFileName, true, true);
-                }else{
+                } else {
                     dProps = readProperties(cFile + "/" + defaultConfigFileName, true, false);
                 }
 
@@ -152,26 +157,26 @@ public class Main {
      * @param x Tells the function the help of what command it should print<br>
      *          (0 = -generate, 1 = -read)
      */
-    public void printHelp(int x) {
+    public void printHelpToConsole(int x) {
         if (x == 0) {
-            System.out.println("generate\t\t\t[generates a certificate]");
-            System.out.println("\t--issuerName\t\t<CA-name>");
-            System.out.println("\t--subjectName\t\t<owner-name>");
-            System.out.println("\t--startDate\t\t<start date of the certificate>");
-            System.out.println("\t--expiryDate\t\t<expiry date of the certificate>");
-            System.out.println("\t--keySize\t\t<size of the public key in bits>");
-            System.out.println("\t--serialNumber\t\t<serial number of the certificate>");
-            System.out.println("\t--signatureAlgorithm\t<signature algorithm>");
-            System.out.println("\t--file\t\t\t<name of the generated certificate>");
-            System.out.println("\t--pathFile\t\t<set the pathfile of the certificate>");
-            System.out.println("\t--config\t\t<set the pathfile of the config.properties file you want to use>");
-            System.out.println("\t--read\t\t\t[enables read]");
+            printHelp("generate\t\t\t[generates a certificate]");
+            printHelp("\t--issuerName\t\t<CA-name>");
+            printHelp("\t--subjectName\t\t<owner-name>");
+            printHelp("\t--startDate\t\t<start date of the certificate>");
+            printHelp("\t--expiryDate\t\t<expiry date of the certificate>");
+            printHelp("\t--keySize\t\t<size of the public key in bits>");
+            printHelp("\t--serialNumber\t\t<serial number of the certificate>");
+            printHelp("\t--signatureAlgorithm\t<signature algorithm>");
+            printHelp("\t--file\t\t\t<name of the generated certificate>");
+            printHelp("\t--pathFile\t\t<set the pathfile of the certificate>");
+            printHelp("\t--config\t\t<set the pathfile of the config.properties file you want to use>" + ANSI_RESET);
+            printHelp("\t--read\t\t\t[enables read]");
         } else if (x == 1) {
-            System.out.println("read \t\t\t\t[reads a certificate]");
-            System.out.println("\t--file\t\t\t<name of the file to read>");
-            System.out.println("\t--pathFile\t\t<set the pathfile of the certificate to read>");
+            printHelp("read \t\t\t[reads a certificate]");
+            printHelp("\t--file\t\t\t<name of the file to read>");
+            printHelp("\t--pathFile\t\t<set the pathfile of the certificate to read>");
         } else if (x == 2) {
-            System.out.println("exit \t\t\t\t[exits the console]");
+            printHelp("exit \t\t\t[exits the console]");
         }
     }
 
@@ -278,8 +283,8 @@ public class Main {
      * @param dPathFile  Default path file the Certificate generator should use if it isn't set
      * @throws Exception If the Generator throws an Exception
      */
-    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile){
-        System.out.println("[INFO] checking inputs");
+    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) {
+        printInfo("checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
         Date stDate = defaultDate(sDate, dStDate);
@@ -292,7 +297,7 @@ public class Main {
 
         pFile = pFile + "/";
 
-        System.out.println("[INFO] generating key pair");
+        printInfo("generating key pair");
 
         KeyPairGenerator keyGen = null;
         try {
@@ -308,24 +313,24 @@ public class Main {
         try {
             rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
         } catch (CertificateEncodingException e) {
-            System.out.println("[ERROR] Couldn't encode the certificate");
+            printError("Couldn't encode the certificate");
         } catch (SignatureException e) {
-            System.out.println("[ERROR] Couldn't sign the certificate");
+            printError("Couldn't sign the certificate");
         } catch (InvalidKeyException e) {
-            System.out.println("[ERROR] The generated key isn't valid");
+            printError("The generated key isn't valid");
         } catch (IOException e) {
-            System.out.println("[ERROR] Couldn't write the certificate");
+            printError("Couldn't write the certificate");
         } catch (NoSuchAlgorithmException e) {
-            System.out.println("[ERROR] The entered algorithm is wrong");
+            printError("The entered algorithm is wrong");
         }
 
         if (bRead) {
             try {
                 rc.printCertDataToConsole(rc.read(file));
             } catch (IOException e) {
-                System.out.println("[ERROR] Couldn't find the certificate to read");
+                printError("[ERROR] Couldn't find the certificate to read");
             } catch (CertificateException e) {
-                System.out.println("[ERROR] Couldn't read the certificate");
+                printError("[ERROR] Couldn't read the certificate");
             }
         }
 
@@ -340,16 +345,16 @@ public class Main {
      * @throws IOException          If the Reader throws an IOException
      * @throws CertificateException If the Reader throws a Certificate Exception
      */
-    public void startReader(ReadCertificate rc, String dPathFile, String dCertName){
+    public void startReader(ReadCertificate rc, String dPathFile, String dCertName) {
         certName = defaultString(certName, dCertName);
         pFile = defaultString(pFile, dPathFile);
         File file = new File(pFile + "/" + certName + ".crt");
         try {
             rc.printCertDataToConsole(rc.read(file));
         } catch (IOException e) {
-            System.out.println("[ERROR] Couldn't find the certificate to read");
+            printError("Couldn't find the certificate to read");
         } catch (CertificateException e) {
-            System.out.println("[ERROR] Couldn't read the certificate");
+            printError("Couldn't read the certificate");
         }
     }
 
@@ -362,9 +367,9 @@ public class Main {
     public Properties readProperties(String configFileName, boolean printMsg, boolean defaultPath) {
         if (printMsg)
             if (defaultPath)
-                System.out.println("[INFO] loading config.properties");
+                printInfo("loading config.properties");
             else
-                System.out.println("[INFO] loading " + configFileName);
+                printInfo("loading " + configFileName);
         Properties prop = new Properties();
 
         if (defaultPath) {
@@ -374,7 +379,7 @@ public class Main {
                 else
                     throw new IOException();
 
-                System.out.println("[INFO] successfully loaded settings from " + configFileName);
+                printInfo("successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -386,13 +391,13 @@ public class Main {
                 else
                     throw new IOException();
 
-                System.out.println("[INFO] successfully loaded settings from " + configFileName);
+                printInfo("successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
                 if (printMsg) {
-                    System.out.println("[ERROR] no file could be found at " + configFileName);
-                    System.out.println("[WARNING] The name of the config file must be config.properties");
-                    System.out.println("[INFO] using default config.properties file");
+                    printError("no file could be found at " + configFileName);
+                    printInfo("The name of the config file must be config.properties");
+                    printInfo("using default config.properties file");
 
                 }
             }
@@ -417,5 +422,29 @@ public class Main {
         pFile = null;
         help = false;
         cFile = null;
+    }
+
+    public void printInfo(String msg) {
+        System.out.println("[" + ANSI_BLUE + "INFO" + ANSI_RESET + "] " + msg);
+    }
+
+    public void printError(String msg) {
+        System.out.println("[" + ANSI_RED + "ERROR" + ANSI_RESET + "] " + msg);
+    }
+
+    public void printConsole() {
+        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> ");
+    }
+
+    public void printHelp(String msg) {
+        System.out.println("[" + ANSI_GREEN + "HELP" + ANSI_RESET + "] " + msg);
+    }
+
+    public void printCertData(String msg) {
+        System.out.println("[" + ANSI_BLUE + "-" + ANSI_RESET + "] " + msg);
+    }
+
+    public void printRedCertData(String msg) {
+        System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
     }
 }

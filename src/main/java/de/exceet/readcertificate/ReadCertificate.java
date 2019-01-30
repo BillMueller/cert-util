@@ -32,8 +32,8 @@ public class ReadCertificate {
      * @throws Exception Needed if some of the inputs are wrong
      */
     public void write(File file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
-
-        System.out.println("[INFO] starting certificate generator");
+        Main main = new Main();
+        main.printInfo("starting certificate generator");
 
         // define serial number, certificate generator and the issuer/subjectdn
         BigInteger serialNumber = BigInteger.valueOf(serNumber);
@@ -61,7 +61,7 @@ public class ReadCertificate {
         output = output + X509Factory.END_CERT;
 
         // System.out.println(output);
-        System.out.println("[INFO] writing certificate to " + file);
+        main.printInfo("writing certificate to " + file);
 
         // write the String into the file ("mycertificate.crt")
         FileWriter wr = new FileWriter(file);
@@ -79,7 +79,8 @@ public class ReadCertificate {
      * @throws javax.security.cert.CertificateException Needed if some of the inputs are wrong
      */
     public List<String> read(File file) throws IOException, javax.security.cert.CertificateException {
-        System.out.println("[INFO] starting certificate reader");
+        Main main = new Main();
+        main.printInfo("starting certificate reader");
         // define input stream to read the file
         InputStream inStream = new FileInputStream(file);
 
@@ -110,7 +111,7 @@ public class ReadCertificate {
         // print the version and get and print serial number, issuer, validity, subject, subject public key info,
         // hash code and the name of the signature algorithm
 
-        output.add(0, "[INFO] Printing certificate data:");
+        output.add(0, "Printing certificate data:");
         output.add(1, "Version: " + v);
         output.add(2, "Serial Number: " + cert.getSerialNumber());
         output.add(3, "Issuer: " + cert.getIssuerDN());
@@ -126,7 +127,7 @@ public class ReadCertificate {
         output.add(8, "Hash Code: " + cert.hashCode());
         output.add(9, "Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
 
-        System.out.println("[INFO] successfully read certificate");
+        main.printInfo("successfully read certificate");
 
         return output;
     }
@@ -150,18 +151,19 @@ public class ReadCertificate {
     }
 
     public void printCertDataToConsole(List<String> input) {
-        System.out.println(input.get(0));
-        System.out.println("[-] " + input.get(1));
-        System.out.println("[-] " + input.get(2));
-        System.out.println("[-] " + input.get(3));
-        System.out.println("[-] " + input.get(4));
+        Main main = new Main();
+        main.printInfo(input.get(0));
+        main.printCertData(input.get(1));
+        main.printCertData(input.get(2));
+        main.printCertData(input.get(3));
+        main.printCertData(input.get(4));
         if (Integer.valueOf(input.get(6)) == 0) {
-            System.out.println("[-] " + input.get(5));
+            main.printCertData(input.get(5));
         } else {
-            System.err.println("[-] " + input.get(5));
+            main.printRedCertData(input.get(5));
         }
-        System.out.println("[-] " + input.get(7));
-        System.out.println("[-] " + input.get(8));
-        System.out.println("[-] " + input.get(9));
+        main.printCertData(input.get(7));
+        main.printCertData(input.get(8));
+        main.printCertData(input.get(9));
     }
 }
