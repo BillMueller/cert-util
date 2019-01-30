@@ -106,21 +106,21 @@ public class ReadCertificate {
         // print the version and get and print serial number, issuer, validity, subject, subject public key info,
         // hash code and the name of the signature algorithm
 
-        output.add(0,"[INFO] Printing certificate data:");
-        output.add(1,"Version: " + v);
-        output.add(2,"Serial Number: " + cert.getSerialNumber());
-        output.add(3,"Issuer: " + cert.getIssuerDN());
-        output.add(4,"Subject: " + cert.getSubjectDN());
+        output.add(0, "[INFO] Printing certificate data:");
+        output.add(1, "Version: " + v);
+        output.add(2, "Serial Number: " + cert.getSerialNumber());
+        output.add(3, "Issuer: " + cert.getIssuerDN());
+        output.add(4, "Subject: " + cert.getSubjectDN());
         if (dateVal) {
             output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is valid.");
-            output.add(6,"0");
+            output.add(6, "0");
         } else {
             output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is not valid.");
-            output.add(6,"1");
+            output.add(6, "1");
         }
-        output.add(7,"Subject Public Key Info: " + cert.getPublicKey());
-        output.add(8,"Hash Code: " + cert.hashCode());
-        output.add(9,"Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
+        output.add(7, "Subject Public Key Info: " + cert.getPublicKey());
+        output.add(8, "Hash Code: " + cert.hashCode());
+        output.add(9, "Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
 
         System.out.println("[INFO] successfully read certificate");
 
@@ -145,15 +145,15 @@ public class ReadCertificate {
         }
     }
 
-    public void printCertDataToConsole(List<String> input){
+    public void printCertDataToConsole(List<String> input) {
         System.out.println(input.get(0));
         System.out.println("[-] " + input.get(1));
         System.out.println("[-] " + input.get(2));
         System.out.println("[-] " + input.get(3));
         System.out.println("[-] " + input.get(4));
-        if(Integer.valueOf(input.get(6)) == 0){
+        if (Integer.valueOf(input.get(6)) == 0) {
             System.out.println("[-] " + input.get(5));
-        }else{
+        } else {
             System.err.println("[-] " + input.get(5));
         }
         System.out.println("[-] " + input.get(7));

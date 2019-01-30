@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 
-public class TestReadCertificate {
+public class TestReadCertificate{
     public static final String RESET = "\u001B[0m";
     public static final String YELLOW = "\u001B[93m";
 
@@ -24,9 +24,9 @@ public class TestReadCertificate {
         Main main = new Main();
         ReadCertificate rc = new ReadCertificate();
 
-        testRead(main, rc, new ArrayList<String>());
+        testRead(main, rc, new ArrayList<>());
 
-        testWrite(rc, new ArrayList<String>());
+        testWrite(rc, new ArrayList<>());
 
         testReadProperties(main);
     }
@@ -117,8 +117,8 @@ public class TestReadCertificate {
      */
     public void testReadProperties(Main main) {
         soY("[INFO] Testing readProperties() function");
-        assert main.readProperties("conffiig.properties", false).isEmpty();
-        assert !main.readProperties("config.properties", false).isEmpty();
+        assert main.readProperties("conffiig.properties", false, true).isEmpty();
+        assert !main.readProperties("config.properties", false, true).isEmpty();
 
         soY("[INFO] Completed testing readProperties() function");
     }

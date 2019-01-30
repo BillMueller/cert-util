@@ -43,7 +43,7 @@ public class Main {
     public String pFile;
     @Parameter(names = "--help", description = "prints out a help for the command entered before")
     public boolean help;
-    @Parameter(names = "--config", description = "set a config file")
+    @Parameter(names = "--config", description = "set a config path file")
     public String cFile;
 
 
@@ -82,10 +82,11 @@ public class Main {
             }
         } else {
             String defaultConfigFileName = "config.properties";
-            cFile = defaultString(cFile, defaultConfigFileName);
+            cFile = defaultString(cFile, "");
             ReadCertificate rc = new ReadCertificate();
 
-            Properties dProps = readProperties(cFile, true);
+            Properties dProps = readProperties(cFile + "/" + defaultConfigFileName, true, cFile.equals(""));
+
             String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
             String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
             int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
@@ -307,88 +308,48 @@ public class Main {
      *
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
-    public Properties readProperties(String configFileName, boolean printMsg) {
+    public Properties readProperties(String configFileName, boolean printMsg, boolean defaultPath) {
         if (printMsg)
-            System.out.println("[INFO] loading " + configFileName);
-        Properties prop = new Properties();
-        InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName);
-
-        try {
-            if (input != null)
-                prop.load(input);
+            if (defaultPath)
+                System.out.println("[INFO] loading config.properties");
             else
-                throw new IOException();
+                System.out.println("[INFO] loading " + configFileName);
+        Properties prop = new Properties();
 
-            System.out.println("[INFO] successfully loaded settings from " + configFileName);
+        if (defaultPath) {
+            try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName)) {
+                if (input != null)
+                    prop.load(input);
+                else
+                    throw new IOException();
 
-        } catch (IOException ex) {
-            if (printMsg) {
-                System.out.println("[ERROR] " + configFileName + " file couldn't be found");
-                System.out.println("[INFO] Should a " + configFileName + " file be created? [y/n]");
-                System.out.print("[INPUT] ");
-                Scanner sc = new Scanner(System.in);
-                String in = sc.nextLine();
-                sc.close();
-                if (in.equals("y")) {
-                    generateProperties(configFileName);
-                } else {
-                    System.out.println("[INFO] using default values");
-                }
+                System.out.println("[INFO] successfully loaded settings from " + configFileName);
+
+            } catch (IOException ex) {
+                printEx(printMsg, true, configFileName);
             }
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        } else {
+            try (InputStream input = new FileInputStream(configFileName)) {
+                if (input != null)
+                    prop.load(input);
+                else
+                    throw new IOException();
+
+                System.out.println("[INFO] successfully loaded settings from " + configFileName);
+
+            } catch (IOException ex) {
+                if(printMsg)
+                    ex.printStackTrace();
             }
         }
         return prop;
     }
 
-    //todo fix the function (can't be generated after building with mvn clean install)
-    public void generateProperties(String fileName) {
-        System.out.println("[INFO] generating " + fileName + " file.");
-        Properties prop = new Properties();
-        OutputStream output = null;
-
-        try {
-
-            output = new FileOutputStream(fileName);
-
-            prop.setProperty("defaultIssuerName", "ca_name");
-            prop.setProperty("defaultSubjectName", "owner_name");
-            prop.setProperty("defaultHeySize", "4096");
-            prop.setProperty("defaultSerialNumber", "default");
-            prop.setProperty("defaultStDate", "default");
-            prop.setProperty("defaultExDate", "default");
-            prop.setProperty("defaultValidity", "default");
-            prop.setProperty("defaultCertificateFileName", "generated_certificate");
-            prop.setProperty("defaultPathFile", "src/main/resources");
-            prop.setProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-
-            prop.store(output, null);
-
-            try{
-                Properties p = new Properties();
-                p.load(getClass().getClassLoader().getResourceAsStream(fileName));
-                System.out.println("[INFO] successfully generated " + fileName + " file.");
-            }catch(Exception e){
-                System.out.println("[ERROR] generated " + fileName + " file couldn't be found");
-            }
-
-        } catch (IOException io) {
-            System.out.println("[ERROR] " + fileName + " couldn't be generated");
-        } finally {
-            if (output != null) {
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
+    public void printEx(boolean p, boolean d, String fn) {
+        if (p && !d) {
+            System.out.println("[ERROR] no file could be found at " + fn);
+            System.out.println("[WARNING] The name of the config file must be config.properties");
+            System.out.println("[INFO] using default config.properties file");
         }
     }
 }
