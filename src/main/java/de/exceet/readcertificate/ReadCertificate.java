@@ -11,7 +11,6 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 public class ReadCertificate {

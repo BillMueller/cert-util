@@ -44,10 +44,10 @@ public class TestReadCertificate {
         try {
             testRead = rc.read(new File("src/test/resources/testCertificate.crt"));
         } catch (IOException ioe) {
-            main.soY("[ERROR] IOException");
+            System.out.println("[ERROR] IOException");
             ioe.printStackTrace();
         } catch (CertificateException ce) {
-            main.soY("[ERROR] Missing the certificate test file or wrong path file");
+            System.out.println("[ERROR] Missing the certificate test file or wrong path file");
             ce.printStackTrace();
         }
         //----+
@@ -117,8 +117,8 @@ public class TestReadCertificate {
      */
     public void testReadProperties(Main main) {
         soY("[INFO] Testing readProperties() function");
-        assert main.readProperties("conffig.properties", false).isEmpty();
-        assert !main.readProperties("config.properties", true).isEmpty();
+        assert main.readProperties("conffiig.properties", false).isEmpty();
+        assert !main.readProperties("config.properties", false).isEmpty();
 
         soY("[INFO] Completed testing readProperties() function");
     }

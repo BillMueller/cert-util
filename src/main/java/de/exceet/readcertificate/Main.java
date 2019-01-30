@@ -10,6 +10,7 @@ import java.security.KeyPairGenerator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Properties;
+import java.util.Scanner;
 
 public class Main {
 
@@ -307,8 +308,8 @@ public class Main {
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
     public Properties readProperties(String configFileName, boolean printMsg) {
-        if(printMsg)
-        System.out.println("[INFO] loading config.properties");
+        if (printMsg)
+            System.out.println("[INFO] loading " + configFileName);
         Properties prop = new Properties();
         InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName);
 
@@ -318,25 +319,76 @@ public class Main {
             else
                 throw new IOException();
 
-            System.out.println("[INFO] successfully loaded settings from config.properties");
+            System.out.println("[INFO] successfully loaded settings from " + configFileName);
 
         } catch (IOException ex) {
-            if(printMsg) {
-                soY("[ERROR] Config file couldn't be found");
-                System.out.println("[INFO] using the default values");
+            if (printMsg) {
+                System.out.println("[ERROR] " + configFileName + " file couldn't be found");
+                System.out.println("[INFO] Should a " + configFileName + " file be created? [y/n]");
+                System.out.print("[INPUT] ");
+                Scanner sc = new Scanner(System.in);
+                String in = sc.nextLine();
+                sc.close();
+                if (in.equals("y")) {
+                    generateProperties(configFileName);
+                } else {
+                    System.out.println("[INFO] using default values");
+                }
             }
-        }finally {
-            if(input != null){
-                try{
+        } finally {
+            if (input != null) {
+                try {
                     input.close();
-                }catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
         return prop;
     }
-    public void soY(String msg) {
-        System.out.println(msg);
+
+    //todo fix the function (can't be generated after building with mvn clean install)
+    public void generateProperties(String fileName) {
+        System.out.println("[INFO] generating " + fileName + " file.");
+        Properties prop = new Properties();
+        OutputStream output = null;
+
+        try {
+
+            output = new FileOutputStream(fileName);
+
+            prop.setProperty("defaultIssuerName", "ca_name");
+            prop.setProperty("defaultSubjectName", "owner_name");
+            prop.setProperty("defaultHeySize", "4096");
+            prop.setProperty("defaultSerialNumber", "default");
+            prop.setProperty("defaultStDate", "default");
+            prop.setProperty("defaultExDate", "default");
+            prop.setProperty("defaultValidity", "default");
+            prop.setProperty("defaultCertificateFileName", "generated_certificate");
+            prop.setProperty("defaultPathFile", "src/main/resources");
+            prop.setProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+
+            prop.store(output, null);
+
+            try{
+                Properties p = new Properties();
+                p.load(getClass().getClassLoader().getResourceAsStream(fileName));
+                System.out.println("[INFO] successfully generated " + fileName + " file.");
+            }catch(Exception e){
+                System.out.println("[ERROR] generated " + fileName + " file couldn't be found");
+            }
+
+        } catch (IOException io) {
+            System.out.println("[ERROR] " + fileName + " couldn't be generated");
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
     }
 }
