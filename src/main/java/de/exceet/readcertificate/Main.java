@@ -10,7 +10,6 @@ import java.security.KeyPairGenerator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Properties;
-import java.util.Scanner;
 
 public class Main {
 
@@ -137,18 +136,22 @@ public class Main {
      */
     public void printHelp(int x) {
         if (x == 0) {
-            System.out.println("-generate --iName <CA-name> --sName <owner-name>\t[generates a certificate]");
-            System.out.println("\t--startDate\t\t\t\t<start date of the certificate>");
-            System.out.println("\t--expiryDate\t\t\t<expiry date of the certificate>");
-            System.out.println("\t--keySize\t\t\t\t<size of the public key in bits>");
-            System.out.println("\t--serialNumber\t\t\t<serial number of the certificate>");
+            System.out.println("-generate\t\t\t[generates a certificate]");
+            System.out.println("\t--issuerName\t\t<CA-name>");
+            System.out.println("\t--subjectName\t\t<owner-name>");
+            System.out.println("\t--startDate\t\t<start date of the certificate>");
+            System.out.println("\t--expiryDate\t\t<expiry date of the certificate>");
+            System.out.println("\t--keySize\t\t<size of the public key in bits>");
+            System.out.println("\t--serialNumber\t\t<serial number of the certificate>");
             System.out.println("\t--signatureAlgorithm\t<signature algorithm>");
-            System.out.println("\t--file\t\t\t\t\t<name of the generated certificate>");
-            System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate>");
-            System.out.println("\t--read");
+            System.out.println("\t--file\t\t\t<name of the generated certificate>");
+            System.out.println("\t--pathFile\t\t<set the pathfile of the certificate>");
+            System.out.println("\t--config\t\t<set the pathfile of the config.properties file you want to use>");
+            System.out.println("\t--read\t\t\t[enables read]");
         } else if (x == 1) {
-            System.out.println("-read --file <name of the file to read>\t[reads a certificate]");
-            System.out.println("\t--pathfile\t\t\t\t<set the pathfile of the certificate to read>");
+            System.out.println("-read \t\t\t\t[reads a certificate]");
+            System.out.println("\t--file\t\t\t<name of the file to read>");
+            System.out.println("\t--pathFile\t\t<set the pathfile of the certificate to read>");
         }
     }
 
@@ -304,7 +307,8 @@ public class Main {
     }
 
     /**
-     * Reads the config.properties file in the main project folder
+     * Reads the config.properties file in the main project folder or a custom config.properties file given with the
+     * --config parameter
      *
      * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
      */
@@ -345,6 +349,7 @@ public class Main {
         return prop;
     }
 
+    //TODO write a description
     public void printEx(boolean p, boolean d, String fn) {
         if (p && !d) {
             System.out.println("[ERROR] no file could be found at " + fn);
