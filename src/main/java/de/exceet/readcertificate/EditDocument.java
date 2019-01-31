@@ -8,31 +8,35 @@ import java.util.Scanner;
 
 public class EditDocument {
     @Parameter(names = "console", description = "changes to J-Console", help = true)
-    public boolean console;
+    private boolean console;
     @Parameter(names = "write", description = "changes to J-Console", help = true)
-    public boolean write;
+    private boolean write;
     @Parameter(names = "exit", description = "exits J-Console/J-Editor", help = true)
-    public static boolean exit;
+    private static boolean exit;
     @Parameter(names = "read", description = "reads a file", help = true)
-    public boolean read;
+    private boolean read;
     @Parameter(names = "cd", description = "changes working directory", help = true)
-    public boolean cd;
+    private boolean cd;
     @Parameter(names = "help", description = "prints out a general help", help = true)
-    public boolean gHelp;
-    //----------+
+    private boolean gHelp;
+    //-------------------------------+
     @Parameter(names = "--help", description = "prints out a help for the command entered before", help = true)
-    public boolean help;
-
+    private boolean help;
     @Parameter(names = "--file", description = "prints out the file name", help = true)
-    public String file;
-
+    private String file;
     @Parameter(names = "--lines", description = "prints out the number of lines the document should have", help = true)
-    public int lines;
+    private int lines;
 
-    public static boolean changeToConsole;
+    private static boolean changeToConsole;
+    private String pFile;
 
-    public String pFile;
-
+    /**
+     * Function that starts the Editor: <br>
+     * It will show [J-CONSOLE> Enter directory> <br>
+     * The user can now choose the directory the program should use for the write() and read() operations
+     * that the user can enter after choosing the directory. <br>
+     * If it is ready to get commands it will show: [J-CONSOLE> Current_Directory> (for example [J-CONSOLE> C:/Users>
+     */
     public void startEditor() {
         Main main = new Main();
         EditDocument ed = new EditDocument();
@@ -66,7 +70,7 @@ public class EditDocument {
                     }
                 }
             }
-            if(!changeToConsole) {
+            if (!changeToConsole) {
                 ed.cd = false;
                 ed.setEditorToDefault();
                 main.printEditor(ed.pFile);
@@ -91,7 +95,16 @@ public class EditDocument {
 
     }
 
-    public void run(Main main, String pF, EditDocument ed) {
+    /**
+     * Main function of the EditDocument class: <br>
+     * It will use the executed command to call the right function needed.
+     *
+     * @param main main object of the Main class (needed to call all printError/-Info/-Help/-Console functions)
+     * @param pF   directory path (needed to call the write() and read() functions)
+     * @param ed   editDocument object of the EditDocument class (needed for some global variables and to call
+     *             the setEditorToDefault function.
+     */
+    private void run(Main main, String pF, EditDocument ed) {
         if (console)
             changeToConsole = true;
         else {
@@ -129,6 +142,9 @@ public class EditDocument {
         }
     }
 
+    /**
+     * Resets all the Mains global variables needed for JCommander
+     */
     private void setEditorToDefault() {
         console = false;
         read = false;
@@ -140,6 +156,12 @@ public class EditDocument {
         file = null;
     }
 
+    /**
+     * Prints out the help for the command.
+     *
+     * @param x Tells the function the help of what command it should print<br>
+     *          (0 = read, 1 = cd, 2 = console, 3 = write, 4 = exit)
+     */
     private void printHelpToConsole(int x) {
         Main main = new Main();
         if (x == 0) {
@@ -149,15 +171,22 @@ public class EditDocument {
             main.printHelp("cd\t\t\t[gives you the option to select another directory]");
         } else if (x == 2) {
             main.printHelp("console\t\t\t[returns to console]");
-        } else if (x == 4){
+        } else if (x == 4) {
             main.printHelp("exit \t\t\t\t[exits the console]");
-        } else if (x == 3){
+        } else if (x == 3) {
             main.printHelp("write\t\t\t[writes a file to you filename]");
             main.printHelp("\t   --file\t\t<name of the file to write>");
             main.printHelp("\t   --lines\t\t<amount of lines you want to write>");
         }
     }
 
+    /**
+     * Reads a *.txt document and prints every line with line number to the console
+     *
+     * @param f    file name
+     * @param pF   directory path
+     * @param main main object of the Main class (needed to call all printError/-Info/-Help/-Console functions)
+     */
     private void read(String f, String pF, Main main) {
         try {
             FileReader fr;
@@ -184,6 +213,14 @@ public class EditDocument {
         }
     }
 
+    /**
+     * Writes a *.txt document and writes it to the file
+     *
+     * @param f             file name
+     * @param pF            directory name
+     * @param main          main object of the Main class (needed to call all printError/-Info/-Help/-Console functions)
+     * @param numberOfLines number of lines the file will have
+     */
     private void write(String f, String pF, Main main, int numberOfLines) {
         BufferedWriter bw;
         if (pF == null || f == null)
