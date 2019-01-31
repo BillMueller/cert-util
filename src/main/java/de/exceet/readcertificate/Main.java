@@ -71,6 +71,7 @@ public class Main {
                     main.setToDefault();
                 } catch (com.beust.jcommander.ParameterException pe) {
                     printError("unknown command or parameters");
+                    exit = false;
                 }
             }
         }
@@ -102,8 +103,11 @@ public class Main {
                     if (read || gHelp) {
                         printHelpToConsole(1);
                     }
-                    if (exit || gHelp) {
+                    if (editor || gHelp) {
                         printHelpToConsole(2);
+                    }
+                    if (exit || gHelp) {
+                        printHelpToConsole(3);
                         exit = false;
                     }
                 } else {
@@ -183,8 +187,10 @@ public class Main {
             printHelp("read \t\t\t[reads a certificate]");
             printHelp("\t   --file\t\t<name of the file to read>");
             printHelp("\t   --pathFile\t\t<set the pathfile of the certificate to read>");
-        } else if (x == 2) {
+        } else if (x == 3) {
             printHelp("exit \t\t\t[exits the console]");
+        } else if(x ==2){
+            printHelp("editor \t\t\t[switches to the text file editor]");
         }
     }
 
@@ -470,7 +476,7 @@ public class Main {
     }
 
     public void printEditor(String msg) {
-        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + ">" +ANSI_YELLOW + " Editor" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
+        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
     }
 
     public void printEditorInput(int i, int max) {

@@ -16,7 +16,7 @@ public class EditDocument {
     @Parameter(names = "read", description = "reads a file", help = true)
     public boolean read;
     @Parameter(names = "cd", description = "changes working directory", help = true)
-    public String cd;
+    public boolean cd;
     @Parameter(names = "help", description = "prints out a general help", help = true)
     public boolean gHelp;
     //----------+
@@ -42,32 +42,45 @@ public class EditDocument {
         String[] sin; //args.clone();
         exit = false;
         changeToConsole = false;
-        boolean start = false;
-
-        while (!start) {
-            main.printEditor("enter the pathfile to your working directory");
-            in = sc.nextLine();
-            if (in.split("/")[0].length() == 2) {
-                ed.pFile = in;
-                start = true;
-            } else {
-                main.printError("the path file you entered is not valid.");
-                main.printInfo("Use '/' for example C:/Users");
-            }
-        }
+        boolean start;
+        ed.cd = true;
 
         while (!exit && !changeToConsole) {
-            ed.setEditorToDefault();
-            main.printEditor(ed.pFile);
-            in = sc.nextLine();
-            sin = in.split(" ");
-            if (sin.length != 0 && !in.equals("")) {
-                try {
-                    jc = JCommander.newBuilder().addObject(ed).build();
-                    jc.parse(sin);
-                    ed.run(main, ed.pFile, ed);
-                } catch (com.beust.jcommander.ParameterException pe) {
-                    main.printError("unknown command or parameters");
+            if (ed.cd) {
+                start = false;
+                while (!start) {
+                    main.printEditor("Enter directory");
+                    in = sc.nextLine();
+                    if (in.split("/")[0].length() == 2) {
+                        ed.pFile = in;
+                        start = true;
+                    } else if (!in.equals("exit") && !in.equals("console")) {
+                        main.printError("the path file you entered is not valid.");
+                        main.printInfo("Use '/' for example C:/Users");
+                    } else if (in.equals("exit")) {
+                        main.printInfo("exiting ...");
+                        System.exit(1);
+                    } else {
+                        changeToConsole = true;
+                        start = true;
+                    }
+                }
+            }
+            if(!changeToConsole) {
+                ed.cd = false;
+                ed.setEditorToDefault();
+                main.printEditor(ed.pFile);
+                in = sc.nextLine();
+                sin = in.split(" ");
+                if (sin.length != 0 && !in.equals("")) {
+                    try {
+                        jc = JCommander.newBuilder().addObject(ed).build();
+                        jc.parse(sin);
+                        ed.run(main, ed.pFile, ed);
+                    } catch (com.beust.jcommander.ParameterException pe) {
+                        main.printError("unknown command or parameters");
+                        exit = false;
+                    }
                 }
             }
         }
@@ -75,6 +88,7 @@ public class EditDocument {
             main.printInfo("exiting ...");
             System.exit(1);
         }
+
     }
 
     public void run(Main main, String pF, EditDocument ed) {
@@ -85,26 +99,28 @@ public class EditDocument {
                 if (read || gHelp) {
                     printHelpToConsole(0);
                 }
-                if (cd != null || gHelp) {
+                if (write || gHelp) {
+                    printHelpToConsole(3);
+                }
+                if (cd || gHelp) {
                     printHelpToConsole(1);
                 }
                 if (console || gHelp) {
                     printHelpToConsole(2);
                 }
+                if (exit || gHelp) {
+                    printHelpToConsole(4);
+                    exit = false;
+                }
             } else {
-                if (cd != null) {
-                    if (cd.split("/")[0].length() == 2) {
-                        ed.pFile = cd;
-                    } else {
-                        main.printError("the path file you entered is not valid.");
-                        main.printInfo("Use '/' for example C:/Users");
-                    }
-                }if (read) {
-                    if(file == null)
+                if (cd) {
+                    ed.cd = true;
+                } else if (read) {
+                    if (file == null)
                         main.printError("you have to enter a file name with the argument --file <filename>");
                     else
                         read(file, pF, main);
-                }else if(write){
+                } else if (write) {
                     lines = main.defaultInt(lines, 10, 1);
                     file = main.defaultString(file, "auto_generated_file.txt");
                     write(file, ed.pFile, main, lines);
@@ -118,7 +134,7 @@ public class EditDocument {
         read = false;
         help = false;
         gHelp = false;
-        cd = null;
+        cd = false;
         write = false;
         lines = 0;
         file = null;
@@ -127,11 +143,18 @@ public class EditDocument {
     private void printHelpToConsole(int x) {
         Main main = new Main();
         if (x == 0) {
-            main.printHelp("read\t\t<file name>");
+            main.printHelp("read\t\t\t[reads the file with your filename]");
+            main.printHelp("\t   --file\t\t<name of the file to read>");
         } else if (x == 1) {
-            main.printHelp("cd\t\t\t<new directory>");
+            main.printHelp("cd\t\t\t[gives you the option to select another directory]");
         } else if (x == 2) {
-            main.printHelp("console\t\t[returns to console]");
+            main.printHelp("console\t\t\t[returns to console]");
+        } else if (x == 4){
+            main.printHelp("exit \t\t\t\t[exits the console]");
+        } else if (x == 3){
+            main.printHelp("write\t\t\t[writes a file to you filename]");
+            main.printHelp("\t   --file\t\t<name of the file to write>");
+            main.printHelp("\t   --lines\t\t<amount of lines you want to write>");
         }
     }
 
@@ -160,19 +183,20 @@ public class EditDocument {
             main.printError("could not read file " + f);
         }
     }
-    private void write(String f, String pF, Main main, int numberOfLines){
+
+    private void write(String f, String pF, Main main, int numberOfLines) {
         BufferedWriter bw;
         if (pF == null || f == null)
             main.printError("you need to enter a file name");
-        else{
+        else {
             try {
                 bw = new BufferedWriter(new FileWriter(pF + "/" + f));
                 Scanner sc = new Scanner(System.in);
                 String in;
                 main.printInfo("Now you can write " + numberOfLines + " line/-s to your selected document:");
                 int c = 0;
-                while(numberOfLines > c){
-                    main.printEditorInput(c+1, numberOfLines);
+                while (numberOfLines > c) {
+                    main.printEditorInput(c + 1, numberOfLines);
                     in = sc.nextLine();
                     bw.write(in);
                     bw.newLine();
@@ -180,7 +204,7 @@ public class EditDocument {
                     c++;
                 }
                 bw.close();
-            }catch(IOException ioe){
+            } catch (IOException ioe) {
                 main.printError("directory couldn't be found");
             }
         }
