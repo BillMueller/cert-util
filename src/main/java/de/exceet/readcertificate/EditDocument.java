@@ -4,7 +4,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
 import java.io.*;
-import java.util.Properties;
 import java.util.Scanner;
 
 public class EditDocument {
@@ -13,20 +12,18 @@ public class EditDocument {
     @Parameter(names = "exit", description = "exits J-Console/J-Editor", help = true)
     public static boolean exit;
     @Parameter(names = "read", description = "reads a file", help = true)
-    public boolean read;
+    public String read;
+    @Parameter(names = "cd", description = "changes working directory", help = true)
+    public String cd;
     @Parameter(names = "help", description = "prints out a general help", help = true)
     public boolean gHelp;
     //----------+
     @Parameter(names = "--help", description = "prints out a help for the command entered before", help = true)
     public boolean help;
-    @Parameter(names = {"--pathFile", "--pFile"}, description = "set the path file")
-    public String pFile;
-    @Parameter(names = "--file", description = "set the file name")
-    public String file;
-    @Parameter(names = "--config", description = "set a config path file")
-    public String cFile;
 
     public static boolean changeToConsole;
+
+    public String pFile;
 
     public void startEditor() {
         Main main = new Main();
@@ -37,16 +34,30 @@ public class EditDocument {
         String[] sin; //args.clone();
         exit = false;
         changeToConsole = false;
+        boolean start = false;
+
+        while (!start) {
+            main.printEditor("enter the pathfile to your working directory");
+            in = sc.nextLine();
+            if (in.split("/")[0].length() == 2) {
+                ed.pFile = in;
+                start = true;
+            } else {
+                main.printError("the path file you entered is not valid.");
+                main.printInfo("Use '/' for example C:/Users");
+            }
+        }
+
         while (!exit && !changeToConsole) {
             ed.setEditorToDefault();
-            main.printEditor();
+            main.printEditor(ed.pFile);
             in = sc.nextLine();
             sin = in.split(" ");
             if (sin.length != 0 && !in.equals("")) {
                 try {
                     jc = JCommander.newBuilder().addObject(ed).build();
                     jc.parse(sin);
-                    ed.run(main);
+                    ed.run(main, ed.pFile, ed);
                 } catch (com.beust.jcommander.ParameterException pe) {
                     main.printError("unknown command or parameters");
                 }
@@ -58,32 +69,31 @@ public class EditDocument {
         }
     }
 
-    public void run(Main main) {
+    public void run(Main main, String pF, EditDocument ed) {
         if (console)
             changeToConsole = true;
         else {
             if (gHelp || help) {
-                if (read || gHelp) {
+                if (read != null || gHelp) {
                     printHelpToConsole(0);
                 }
-                if (console || gHelp) {
+                if (cd != null || gHelp) {
                     printHelpToConsole(1);
                 }
-            } else {
-                String defaultConfigFileName = "config.properties";
-                cFile = main.defaultString(cFile, "");
-                ReadCertificate rc = new ReadCertificate();
-                Properties dProps;
-
-                if (cFile.equals("")) {
-                    dProps = main.readProperties(defaultConfigFileName, true, true);
-                } else {
-                    dProps = main.readProperties(cFile + "/" + defaultConfigFileName, true, false);
+                if (console || gHelp) {
+                    printHelpToConsole(2);
                 }
-
-
-                if (read) {
-                    read(file, pFile, main);
+            } else {
+                if (cd != null) {
+                    if (cd.split("/")[0].length() == 2) {
+                        ed.pFile = cd;
+                    } else {
+                        main.printError("the path file you entered is not valid.");
+                        main.printInfo("Use '/' for example C:/Users");
+                    }
+                }
+                if (read != null) {
+                    read(read, pF, main);
                 }
             }
         }
@@ -91,21 +101,19 @@ public class EditDocument {
 
     private void setEditorToDefault() {
         console = false;
-        read = false;
-        pFile = null;
-        file = null;
+        read = null;
         help = false;
         gHelp = false;
+        cd = null;
     }
 
     private void printHelpToConsole(int x) {
         Main main = new Main();
         if (x == 0) {
-            main.printHelp("read\t\t\t[reads a file]");
-            main.printHelp("\t   --file\t\t<name of the generated certificate>");
-            main.printHelp("\t   --pathFile\t\t<set the pathfile of the certificate>");
-            main.printHelp("\t   --config\t\t<set the pathfile of the config.properties file you want to use>");
-        } else if (x == 1){
+            main.printHelp("read\t\t<file name>");
+        } else if (x == 1) {
+            main.printHelp("cd\t\t\t<new directory>");
+        } else if (x == 2) {
             main.printHelp("console\t\t[returns to console]");
         }
     }
@@ -113,25 +121,26 @@ public class EditDocument {
     private void read(String f, String pF, Main main) {
         try {
             FileReader fr;
-
-            if (pF.equals(null) || f.equals(null))
+            if (pF == null || f == null)
                 main.printError("you need to enter a file name and path file");
             else {
-                fr = new FileReader(pF + "/" + f);
-                BufferedReader br = new BufferedReader(fr);
+                BufferedReader br = new BufferedReader(new FileReader(pF + "/" + f));
+                BufferedReader fR = new BufferedReader(new FileReader(pF + "/" + f));
                 main.printInfo("reading file");
                 String s;
-                while((s = br.readLine()) != null){
-                    main.printCertData(s);
+                int c = 1, max = (int) fR.lines().count();
+                while ((s = br.readLine()) != null) {
+                    main.printDocumentData(s, c, max);
+                    c++;
                 }
+                br.close();
+                fR.close();
                 main.printInfo("completed reading file");
             }
         } catch (FileNotFoundException fE) {
-            main.printError("could not find file " + f);
+            main.printError("could not find file " + f + " (wrong directory or file name");
         } catch (IOException ioe) {
             main.printError("could not read file " + f);
-        } catch (NullPointerException nE){
-            main.printError("you need to enter a file name and path file");
         }
     }
 }

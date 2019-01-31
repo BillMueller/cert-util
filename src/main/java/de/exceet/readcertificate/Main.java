@@ -453,11 +453,23 @@ public class Main {
         System.out.println("[" + ANSI_BLUE + "-" + ANSI_RESET + "] " + msg);
     }
 
+    public void printDocumentData(String msg, int i, int max) {
+        if(max/1000. > 1 && i/10. < 1) {
+            System.out.println("[" + ANSI_BLUE + "   " + i +ANSI_RESET + "] " + msg);
+        } else if((max/1000. > 1 && i/100. < 1) || (max/100. > 1 && i/10. < 1)) {
+            System.out.println("[" + ANSI_BLUE + "  " + i + ANSI_RESET + "] " + msg);
+        } else if((max/1000. > 1 && i/1000. < 1) || (max/100. > 1 && i/100. < 1) || (max/10. > 1 && i/10. < 1)) {
+            System.out.println("[" + ANSI_BLUE + " " + i +ANSI_RESET + "] " + msg);
+        } else {
+            System.out.println("[" + ANSI_BLUE +i + ANSI_RESET + "] " + msg);
+        }
+    }
+
     public void printRedCertData(String msg) {
         System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
     }
 
-    public void printEditor() {
-        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + ">" +ANSI_YELLOW + " Editor" + ANSI_RESET + "> ");
+    public void printEditor(String msg) {
+        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + ">" +ANSI_YELLOW + " Editor" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
     }
 }
