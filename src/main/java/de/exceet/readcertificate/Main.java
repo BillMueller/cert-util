@@ -472,4 +472,16 @@ public class Main {
     public void printEditor(String msg) {
         System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + ">" +ANSI_YELLOW + " Editor" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
     }
+
+    public void printEditorInput(int i, int max) {
+        if(max/1000. > 1 && i/10. < 1) {
+            System.out.print("[" + ANSI_YELLOW + "   " + i +ANSI_RESET + "] ");
+        } else if((max/1000. > 1 && i/100. < 1) || (max/100. > 1 && i/10. < 1)) {
+            System.out.print("[" + ANSI_YELLOW + "  " + i + ANSI_RESET + "] ");
+        } else if((max/1000. > 1 && i/1000. < 1) || (max/100. > 1 && i/100. < 1) || (max/10. > 1 && i/10. < 1)) {
+            System.out.print("[" + ANSI_YELLOW + " " + i +ANSI_RESET + "] ");
+        } else {
+            System.out.print("[" + ANSI_YELLOW +i + ANSI_RESET + "] ");
+        }
+    }
 }
