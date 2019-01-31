@@ -16,13 +16,15 @@ public class Main {
     public final String ANSI_YELLOW = "\u001B[93m";
     public final String ANSI_BLUE = "\u001B[94m";
 
-    @Parameter(names = "generate", description = "generate a new certificate", help = true)
+    @Parameter(names = {"generate", "gen"}, description = "generate a new certificate", help = true)
     public boolean gen;
     @Parameter(names = "read", description = "read a certificate", help = true)
     public boolean read;
-    @Parameter(names = "help", description = "prints out a help for the command entered before", help = true)
+    @Parameter(names = "help", description = "prints out a general help", help = true)
     public boolean gHelp;
-    @Parameter(names = "exit", description = "exits J-Console", help = true)
+    @Parameter(names = "editor", description = "changes to J-Editor", help = true)
+    public boolean editor;
+    @Parameter(names = "exit", description = "exits J-Console/J-Editor", help = true)
     public static boolean exit;
     //-------------------------------+
     @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
@@ -45,7 +47,7 @@ public class Main {
     public boolean bRead;
     @Parameter(names = {"--pathFile", "--pFile"}, description = "set the path file")
     public String pFile;
-    @Parameter(names = {"--help","-h"}, description = "prints out a help for the command entered before")
+    @Parameter(names = {"--help", "-h"}, description = "prints out a help for the command entered before")
     public boolean help;
     @Parameter(names = "--config", description = "set a config path file")
     public String cFile;
@@ -58,7 +60,6 @@ public class Main {
         String[] sin; //args.clone();
         exit = false;
         while (!exit) {
-            main.setToDefault();
             printConsole();
             in = sc.nextLine();
             sin = in.split(" ");
@@ -66,7 +67,8 @@ public class Main {
                 try {
                     jc = JCommander.newBuilder().addObject(main).build();
                     jc.parse(sin);
-                    main.run();
+                    main.run(main);
+                    main.setToDefault();
                 } catch (com.beust.jcommander.ParameterException pe) {
                     printError("unknown command or parameters");
                 }
@@ -86,67 +88,73 @@ public class Main {
      *
      * @throws Exception Needed if one of the next functions throws an Exeption
      */
-    public void run() {
-        if (!exit || (exit && help)) {
-            if (help || gHelp) {
-                if (gen || gHelp) {
-                    printHelpToConsole(0);
-                }
-                if (read || gHelp) {
-                    printHelpToConsole(1);
-                }
-                if (exit || gHelp) {
-                    printHelpToConsole(2);
-                    exit = false;
-                }
-            } else {
-                String defaultConfigFileName = "config.properties";
-                cFile = defaultString(cFile, "");
-                ReadCertificate rc = new ReadCertificate();
-                Properties dProps;
-
-                if (cFile.equals("")) {
-                    dProps = readProperties(defaultConfigFileName, true, true);
+    private void run(Main main) {
+        if (editor) {
+            EditDocument ed = new EditDocument();
+            ed.startEditor();
+            main.setToDefault();
+        } else {
+            if (!exit || (exit && help)) {
+                if (help || gHelp) {
+                    if (gen || gHelp) {
+                        printHelpToConsole(0);
+                    }
+                    if (read || gHelp) {
+                        printHelpToConsole(1);
+                    }
+                    if (exit || gHelp) {
+                        printHelpToConsole(2);
+                        exit = false;
+                    }
                 } else {
-                    dProps = readProperties(cFile + "/" + defaultConfigFileName, true, false);
+                    String defaultConfigFileName = "config.properties";
+                    cFile = defaultString(cFile, "");
+                    ReadCertificate rc = new ReadCertificate();
+                    Properties dProps;
+
+                    if (cFile.equals("")) {
+                        dProps = readProperties(defaultConfigFileName, true, true);
+                    } else {
+                        dProps = readProperties(cFile + "/" + defaultConfigFileName, true, false);
+                    }
+
+                    String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+                    String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+                    int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
+                    String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+                    String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+                    String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+                    String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+                    String dCertName = dProps.getProperty("defaultFileName", "generated_certificate");
+                    String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
+                    String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+
+                    Date dStDate, dExDate = new Date();
+                    long milSecValid = 31536000000L, dSerNumber;
+
+                    if (dPropsStDate.equals("default"))
+                        dStDate = new Date();
+                    else
+                        dStDate = stringToDate(dPropsStDate);
+
+                    if (!dPropsValidity.equals("default"))
+                        milSecValid = Long.valueOf(dPropsValidity);
+
+                    if (dPropsExDate.equals("default"))
+                        dExDate.setTime(dStDate.getTime() + milSecValid);
+                    else
+                        dExDate = stringToDate(dPropsExDate);
+
+                    if (dPropsSerNumber.equals("default"))
+                        dSerNumber = new Date().getTime();
+                    else
+                        dSerNumber = Long.valueOf(dPropsSerNumber);
+
+                    if (!help && gen)
+                        startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
+                    if (read && !help)
+                        startReader(rc, dPathFile, dCertName);
                 }
-
-                String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-                String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-                int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
-                String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-                String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-                String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-                String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-                String dCertName = dProps.getProperty("defaultCertificateFileName", "generated_certificate");
-                String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
-                String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-
-                Date dStDate, dExDate = new Date();
-                long milSecValid = 31536000000L, dSerNumber;
-
-                if (dPropsStDate.equals("default"))
-                    dStDate = new Date();
-                else
-                    dStDate = stringToDate(dPropsStDate);
-
-                if (!dPropsValidity.equals("default"))
-                    milSecValid = Long.valueOf(dPropsValidity);
-
-                if (dPropsExDate.equals("default"))
-                    dExDate.setTime(dStDate.getTime() + milSecValid);
-                else
-                    dExDate = stringToDate(dPropsExDate);
-
-                if (dPropsSerNumber.equals("default"))
-                    dSerNumber = new Date().getTime();
-                else
-                    dSerNumber = Long.valueOf(dPropsSerNumber);
-
-                if (!help && gen)
-                    startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
-                if (read && !help)
-                    startReader(rc, dPathFile, dCertName);
             }
         }
     }
@@ -157,24 +165,24 @@ public class Main {
      * @param x Tells the function the help of what command it should print<br>
      *          (0 = -generate, 1 = -read)
      */
-    public void printHelpToConsole(int x) {
+    private void printHelpToConsole(int x) {
         if (x == 0) {
             printHelp("generate\t\t\t[generates a certificate]");
-            printHelp("\t--issuerName\t\t<CA-name>");
-            printHelp("\t--subjectName\t\t<owner-name>");
-            printHelp("\t--startDate\t\t<start date of the certificate>");
-            printHelp("\t--expiryDate\t\t<expiry date of the certificate>");
-            printHelp("\t--keySize\t\t<size of the public key in bits>");
-            printHelp("\t--serialNumber\t\t<serial number of the certificate>");
-            printHelp("\t--signatureAlgorithm\t<signature algorithm>");
-            printHelp("\t--file\t\t\t<name of the generated certificate>");
-            printHelp("\t--pathFile\t\t<set the pathfile of the certificate>");
-            printHelp("\t--config\t\t<set the pathfile of the config.properties file you want to use>" + ANSI_RESET);
-            printHelp("\t--read\t\t\t[enables read]");
+            printHelp("\t   --issuerName\t\t<CA-name>");
+            printHelp("\t   --subjectName\t<owner-name>");
+            printHelp("\t   --startDate\t\t<start date of the certificate>");
+            printHelp("\t   --expiryDate\t\t<expiry date of the certificate>");
+            printHelp("\t   --keySize\t\t<size of the public key in bits>");
+            printHelp("\t   --serialNumber\t<serial number of the certificate>");
+            printHelp("\t   --signatureAlgorithm\t<signature algorithm>");
+            printHelp("\t   --file\t\t<name of the generated certificate>");
+            printHelp("\t   --pathFile\t\t<set the pathfile of the certificate>");
+            printHelp("\t   --config\t\t<set the pathfile of the config.properties file you want to use>");
+            printHelp("\t   --read\t\t[enables read]");
         } else if (x == 1) {
             printHelp("read \t\t\t[reads a certificate]");
-            printHelp("\t--file\t\t\t<name of the file to read>");
-            printHelp("\t--pathFile\t\t<set the pathfile of the certificate to read>");
+            printHelp("\t   --file\t\t<name of the file to read>");
+            printHelp("\t   --pathFile\t\t<set the pathfile of the certificate to read>");
         } else if (x == 2) {
             printHelp("exit \t\t\t[exits the console]");
         }
@@ -204,7 +212,7 @@ public class Main {
      * @return If in > val -> in<br>
      * If in <= val -> d
      */
-    public int defaultInt(int in, int d, int val) {
+    int defaultInt(int in, int d, int val) {
         if (in < val) {
             in = d;
         }
@@ -220,7 +228,7 @@ public class Main {
      * @return If in > val -> in<br>
      * If in <= val -> d
      */
-    public long defaultLong(long in, long d, int val) {
+    private long defaultLong(long in, long d, int val) {
         if (in < val) {
             in = d;
         }
@@ -235,7 +243,7 @@ public class Main {
      * @return If in != null -> in <br>
      * If in == null -> d
      */
-    public Date defaultDate(String in, Date d) {
+    private Date defaultDate(String in, Date d) {
         Date out;
         if (in == null) {
             out = d;
@@ -253,7 +261,7 @@ public class Main {
      * @param i String in DD-MM-YYYY format
      * @return Date in Date format as output
      */
-    public Date stringToDate(String i) {
+    private Date stringToDate(String i) {
         int d = 0, y = 0, m = 0;
         try {
             String[] sa = i.split("");
@@ -283,7 +291,7 @@ public class Main {
      * @param dPathFile  Default path file the Certificate generator should use if it isn't set
      * @throws Exception If the Generator throws an Exception
      */
-    public void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) {
+    private void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) {
         printInfo("checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
@@ -345,7 +353,7 @@ public class Main {
      * @throws IOException          If the Reader throws an IOException
      * @throws CertificateException If the Reader throws a Certificate Exception
      */
-    public void startReader(ReadCertificate rc, String dPathFile, String dCertName) {
+    private void startReader(ReadCertificate rc, String dPathFile, String dCertName) {
         certName = defaultString(certName, dCertName);
         pFile = defaultString(pFile, dPathFile);
         File file = new File(pFile + "/" + certName + ".crt");
@@ -405,10 +413,11 @@ public class Main {
         return prop;
     }
 
-    public void setToDefault() {
+    private void setToDefault() {
         gen = false;
         read = false;
         gHelp = false;
+        editor = false;
         //-------+
         iName = null;
         sName = null;
@@ -446,5 +455,9 @@ public class Main {
 
     public void printRedCertData(String msg) {
         System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
+    }
+
+    public void printEditor() {
+        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + ">" +ANSI_YELLOW + " Editor" + ANSI_RESET + "> ");
     }
 }
