@@ -1,7 +1,7 @@
 package de.exceet.testreadcerfiticate;
 
+import de.exceet.readcertificate.EditCertificate;
 import de.exceet.readcertificate.Main;
-import de.exceet.readcertificate.ReadCertificate;
 import org.junit.Test;
 
 import javax.security.cert.CertificateException;
@@ -22,7 +22,7 @@ public class TestReadCertificate{
     @Test
     public void test() {
         Main main = new Main();
-        ReadCertificate rc = new ReadCertificate();
+        EditCertificate rc = new EditCertificate();
 
         testRead(main, rc, new ArrayList<>());
 
@@ -35,10 +35,10 @@ public class TestReadCertificate{
      * Tests the read() function to read certificates with an example certificate
      *
      * @param main     Main class (needed to call main.sErr())
-     * @param rc       ReadCertificate class (needed to call read())
+     * @param rc       EditCertificate class (needed to call read())
      * @param testRead new ArrayList<>() (for Testing)
      */
-    public void testRead(Main main, ReadCertificate rc, List<String> testRead) {
+    public void testRead(Main main, EditCertificate rc, List<String> testRead) {
         //---- Test read() ----//
         soY("[INFO] Testing read() function");
         try {
@@ -70,10 +70,10 @@ public class TestReadCertificate{
      * Tests the write() function to generate certificates with example values and reads the certificate with the read() function
      * to see if it is working correctly
      *
-     * @param wc        ReadCertificate class (needed to call write())
+     * @param wc        EditCertificate class (needed to call write())
      * @param testWrite new ArrayList<>() (for Testing)
      */
-    public void testWrite(ReadCertificate wc, List<String> testWrite) {
+    public void testWrite(EditCertificate wc, List<String> testWrite) {
         //---- Test write() ----//
         soY("[INFO] Testing write() function");
         String iName = "CN=ca" + (int) (Math.random() * 100);

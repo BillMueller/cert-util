@@ -16,14 +16,18 @@ public class Main {
     private final String ANSI_YELLOW = "\u001B[93m";
     private final String ANSI_BLUE = "\u001B[94m";
 
-    @Parameter(names = {"generate", "gen"}, description = "generate a new certificate", help = true)
-    private boolean gen;
-    @Parameter(names = "read", description = "read a certificate", help = true)
-    private boolean read;
+    @Parameter(names = {"writeCertificate", "wc"}, description = "generate a new certificate", help = true)
+    private boolean writeC;
+    @Parameter(names = {"writeDocument", "wd"}, description = "changes to J-Console", help = true)
+    private boolean writeD;
+    @Parameter(names = {"readCertificate", "rc"}, description = "read a certificate", help = true)
+    private boolean readC;
+    @Parameter(names = {"readDocument", "rd"}, description = "reads a file", help = true)
+    private boolean readD;
+    @Parameter(names = {"changeDirectory", "cd"}, description = "changes working directory", help = true)
+    private boolean cd;
     @Parameter(names = "help", description = "prints out a general help", help = true)
     private boolean gHelp;
-    @Parameter(names = "editor", description = "changes to J-Editor", help = true)
-    private boolean editor;
     @Parameter(names = "exit", description = "exits J-Console/J-Editor", help = true)
     private static boolean exit;
     //-------------------------------+
@@ -40,83 +44,102 @@ public class Main {
     @Parameter(names = {"--serialNumber", "--serNumb"}, description = "set a serial number")
     private long serNumber;
     @Parameter(names = "--file", description = "set the certificate name")
-    private String certName;
+    private String fileName;
     @Parameter(names = {"--signatureAlgorithm", "signAlg"}, description = "set signature algorithm")
     private String signAlg;
     @Parameter(names = "--read", description = "decide if you want to read the certificate after generating it")
     private boolean bRead;
-    @Parameter(names = {"--pathFile", "--pFile"}, description = "set the path file")
-    private String pFile;
     @Parameter(names = {"--help", "-h"}, description = "prints out a help for the command entered before")
     private boolean help;
     @Parameter(names = "--config", description = "set a config path file")
     private String cFile;
+    @Parameter(names = "--lines", description = "prints out the number of lines the document should have", help = true)
+    private int lines;
 
-    /**
-     * Function that starts the Console: <br>
-     * It will show [J-CONSOLE> if it is ready for commands <br>
-     * It will call the run() function to handle the executed commands
-     */
-    public void startConsole() {
+    private String pFile;
+
+    public void main() {
         Main main = new Main();
+        EditDocument ed = new EditDocument();
         Scanner sc = new Scanner(System.in);
         String in;
         JCommander jc;
         String[] sin; //args.clone();
-        exit = false;
-        while (!exit) {
-            printConsole();
+        main.exit = false;
+        boolean start;
+        main.cd = true;
+
+        while (!main.exit) {
+            if (main.cd) {
+                start = false;
+                while (!start) {
+                    main.printEditor("Enter directory");
+                    in = sc.nextLine();
+                    if (in.split("/")[0].length() == 2) {
+                        main.pFile = in;
+                        start = true;
+                    } else if (!in.equals("exit")) {
+                        main.printError("the path file you entered is not valid.");
+                        main.printInfo("Use '/' for example C:/Users");
+                    } else {
+                        main.printInfo("exiting ...");
+                        System.exit(1);
+                    }
+                }
+            }
+            main.cd = false;
+            main.setToDefault();
+            main.printEditor(main.pFile);
             in = sc.nextLine();
             sin = in.split(" ");
             if (sin.length != 0 && !in.equals("")) {
                 try {
                     jc = JCommander.newBuilder().addObject(main).build();
                     jc.parse(sin);
-                    main.run(main);
-                    main.setToDefault();
+                    main.run(main, main.pFile, ed);
                 } catch (com.beust.jcommander.ParameterException pe) {
-                    printError("unknown command or parameters");
-                    exit = false;
+                    main.printError("unknown command or parameters");
+                    main.exit = false;
+                    main.cd = false;
                 }
             }
         }
-        printInfo("exiting ...");
-        sc.close();
-
+        printInfo("exiting...");
     }
 
-    /**
-     * The function run() uses the information of the JController and starts the write() function with it. <br>
-     * All values that don't get set by the JController get set to their default value. <br>
-     * Within the function also the stringToDate() function gets called to convert the Strings collected for the start <br>
-     * and the expiry date JController command to a Date variable. <br>
-     * If the user used the command -read it will also call the function read().
-     */
-    private void run(Main main) {
-        if (editor && !help) {
-            EditDocument ed = new EditDocument();
-            ed.startEditor();
-            main.setToDefault();
+    private void run(Main main, String pF, EditDocument ed) {
+        if (gHelp || help) {
+            if (gHelp) {
+                printHelpToConsole(6);
+            }
+            if (readD) {
+                printHelpToConsole(3);
+            }
+            if (writeD) {
+                printHelpToConsole(5);
+            }
+            if (readC) {
+                printHelpToConsole(1);
+            }
+            if (writeC) {
+                printHelpToConsole(0);
+            }
+            if (cd) {
+                printHelpToConsole(4);
+                main.cd = false;
+            }
+            if (main.exit) {
+                printHelpToConsole(2);
+                main.exit = false;
+            }
         } else {
-            if (!exit || (exit && help)) {
-                if (help || gHelp) {
-                    if (gen || gHelp) {
-                        printHelpToConsole(0);
-                    }
-                    if (read || gHelp) {
-                        printHelpToConsole(1);
-                    }
-                    if (editor || gHelp) {
-                        printHelpToConsole(2);
-                    }
-                    if (exit || gHelp) {
-                        printHelpToConsole(3);
-                        exit = false;
-                    }
+            if (!main.exit) {
+                if (cd) {
+                    main.cd = true;
                 } else {
                     String defaultConfigFileName = "config.properties";
                     cFile = defaultString(cFile, "");
-                    ReadCertificate rc = new ReadCertificate();
+                    EditCertificate rc = new EditCertificate();
                     Properties dProps;
 
                     if (cFile.equals("")) {
@@ -132,8 +155,6 @@ public class Main {
                     String dPropsStDate = dProps.getProperty("defaultStDate", "default");
                     String dPropsExDate = dProps.getProperty("defaultExDate", "default");
                     String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-                    String dCertName = dProps.getProperty("defaultFileName", "generated_certificate");
-                    String dPathFile = dProps.getProperty("defaultPathFile", "src/main/resources");
                     String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
 
                     Date dStDate, dExDate = new Date();
@@ -157,10 +178,30 @@ public class Main {
                     else
                         dSerNumber = Long.valueOf(dPropsSerNumber);
 
-                    if (!help && gen)
-                        startGenerator(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dCertName, dSignAlg, dPathFile);
-                    if (read && !help)
-                        startReader(rc, dPathFile, dCertName);
+                    if (readD) {
+                        if (fileName == null)
+                            main.printError("you have to enter a file name with the argument --file <filename>");
+                        else
+                            ed.read(fileName, pF, main);
+                    } else if (writeD) {
+                        if (fileName == null)
+                            main.printError("you have to enter a file name with the argument --file <filename>");
+                        else {
+                            lines = main.defaultInt(lines, 10, 1);
+                            fileName = main.defaultString(fileName, "auto_generated_file.txt");
+                            ed.write(fileName, main.pFile, main, lines);
+                        }
+                    } else if (writeC) {
+                        if (fileName == null)
+                            main.printError("you have to enter a file name with the argument --file <filename>");
+                        else
+                            startWriter(rc, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg, main);
+                    } else if (readC) {
+                        if (fileName == null)
+                            main.printError("you have to enter a file name with the argument --file <filename>");
+                        else
+                            startReader(rc, main);
+                    }
                 }
             }
         }
@@ -170,30 +211,44 @@ public class Main {
      * Prints out the help for the command.
      *
      * @param x tells the function the help of what command it should print<br>
-     *          (0 = generate, 1 = read, 2 = editor, 3 = exit)
+     *          (0 = writeCertificate, 1 = readCertificate, 2 = exit, 3 = readDocument, 4 = cd, 5 = writeDocument, 6 = general help)
      */
     private void printHelpToConsole(int x) {
         if (x == 0) {
-            printHelp("generate\t\t\t[generates a certificate]");
-            printHelp("\t   --issuerName\t\t<CA-name>");
-            printHelp("\t   --subjectName\t<owner-name>");
-            printHelp("\t   --startDate\t\t<start date of the certificate>");
-            printHelp("\t   --expiryDate\t\t<expiry date of the certificate>");
-            printHelp("\t   --keySize\t\t<size of the public key in bits>");
-            printHelp("\t   --serialNumber\t<serial number of the certificate>");
-            printHelp("\t   --signatureAlgorithm\t<signature algorithm>");
-            printHelp("\t   --file\t\t<name of the generated certificate>");
-            printHelp("\t   --pathFile\t\t<set the pathfile of the certificate>");
-            printHelp("\t   --config\t\t<set the pathfile of the config.properties file you want to use>");
-            printHelp("\t   --read\t\t[enables read]");
+            printHelp("writeCertificate | wc\t\t[generates a certificate]");
+            printHelp("\t\t--issuerName\t\t<CA-name>");
+            printHelp("\t\t--subjectName\t\t<owner-name>");
+            printHelp("\t\t--startDate\t\t<start date of the certificate>");
+            printHelp("\t\t--expiryDate\t\t<expiry date of the certificate>");
+            printHelp("\t\t--keySize\t\t<size of the public key in bits>");
+            printHelp("\t\t--serialNumber\t\t<serial number of the certificate>");
+            printHelp("\t\t--signatureAlgorithm\t<signature algorithm>");
+            printHelp("\t\t--file\t\t\t<name of the generated certificate>");
+            printHelp("\t\t--config\t\t<set the pathfile of the config.properties file you want to use>");
+            printHelp("\t\t--read\t\t\t[enables read]");
         } else if (x == 1) {
-            printHelp("read \t\t\t[reads a certificate]");
-            printHelp("\t   --file\t\t<name of the file to read>");
-            printHelp("\t   --pathFile\t\t<set the pathfile of the certificate to read>");
-        } else if (x == 3) {
-            printHelp("exit \t\t\t[exits the console]");
+            printHelp("readCertificate | rc \t\t[reads a certificate]");
+            printHelp("\t\t--file\t\t\t<name of the file to read>");
         } else if (x == 2) {
-            printHelp("editor \t\t\t[switches to the text file editor]");
+            printHelp("exit\t\t\t\t[exits the console]");
+        } else if (x == 3) {
+            printHelp("readDocument | rd\t\t[reads a *.txt file with your filename]");
+            printHelp("\t\t--file\t\t\t<name of the file to read>");
+        } else if (x == 4) {
+            printHelp("cd\t\t\t\t[gives you the option to select another directory]");
+        } else if (x == 5) {
+            printHelp("writeDocument | wd\t\t[writes a *.txt file to you filename]");
+            printHelp("\t\t--file\t\t\t<name of the file to write>");
+            printHelp("\t\t--lines\t\t\t<amount of lines you want to write>");
+        } else if (x == 6) {
+            printHelp("writeCertificate | wc\t\t[generates a certificate]");
+            printHelp("readCertificate | rc\t\t[reads a certificate]");
+            printHelp("writeDocument | wd\t\t[writes a file to you filename]");
+            printHelp("readDocument | rd\t\t[reads the file with your filename]");
+            printHelp("cd\t\t\t\t[gives you the option to select another directory]");
+            printHelp("exit\t\t\t\t[exits the console]");
+            printHelp("");
+            printHelp("Use <command> -h | --help to get further information about the command and the parameters you can apply to it");
         }
     }
 
@@ -290,16 +345,15 @@ public class Main {
     /**
      * Starts the Certificate generator. Needs all default values for the Certificate parameters.
      *
-     * @param rc         ReadCertificate class object that's needed to start the Certificate generator in the that Class
-     * @param dStDate    Default start date the Certificate generator should use if it isn't set
-     * @param dExDate    Default expiry date the Certificate generator should use if it isn't set
-     * @param dKeys      Default key size the Certificate generator should use if it isn't set
-     * @param dSerNumber Default serial number the Certificate generator should use if it isn't set
-     * @param dCertName  Default certificate filename the Certificate generator should use if it isn't set
-     * @param dSignAlg   Default signature algorithm the Certificate generator should use if it isn't set
-     * @param dPathFile  Default path file the Certificate generator should use if it isn't set
+     * @param rc         editCertificate class object that's needed to start the Certificate generator in the that Class
+     * @param dStDate    default start date the Certificate generator should use if it isn't set
+     * @param dExDate    default expiry date the Certificate generator should use if it isn't set
+     * @param dKeys      default key size the Certificate generator should use if it isn't set
+     * @param dSerNumber default serial number the Certificate generator should use if it isn't set
+     * @param dSignAlg   default signature algorithm the Certificate generator should use if it isn't set
+     * @param main       main class object
      */
-    private void startGenerator(ReadCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dCertName, String dSignAlg, String dPathFile) {
+    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber,String dSignAlg, Main main) {
         printInfo("checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
@@ -307,11 +361,7 @@ public class Main {
         Date exDate = defaultDate(eDate, dExDate);
         keys = defaultInt(keys, dKeys, 512);
         serNumber = defaultLong(serNumber, dSerNumber, 1);
-        certName = defaultString(certName, dCertName);
         signAlg = defaultString(signAlg, dSignAlg);
-        pFile = defaultString(pFile, dPathFile);
-
-        pFile = pFile + "/";
 
         printInfo("generating key pair");
 
@@ -324,7 +374,7 @@ public class Main {
         keyGen.initialize(keys);
         KeyPair keypair = keyGen.generateKeyPair();
 
-        File file = new File(pFile + certName + ".crt");
+        File file = new File(main.pFile + "/" + fileName + ".crt");
 
         try {
             rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
@@ -356,13 +406,10 @@ public class Main {
      * Starts the Certificate reader. Needs all default values for the reading parameters.
      *
      * @param rc        readCertificate class object that's needed to start the Certificate reader in the that Class
-     * @param dPathFile default path file the Certificate reader should use if it isn't set
-     * @param dCertName default name of the Certificate
+     * @param main      main class object
      */
-    private void startReader(ReadCertificate rc, String dPathFile, String dCertName) {
-        certName = defaultString(certName, dCertName);
-        pFile = defaultString(pFile, dPathFile);
-        File file = new File(pFile + "/" + certName + ".crt");
+    private void startReader(EditCertificate rc,Main main) {
+        File file = new File(main.pFile + "/" + fileName + ".crt");
         try {
             rc.printCertDataToConsole(rc.read(file));
         } catch (IOException e) {
@@ -427,10 +474,12 @@ public class Main {
      * Resets all the Mains global variables needed for JCommander
      */
     private void setToDefault() {
-        gen = false;
-        read = false;
+        writeC = false;
+        readC = false;
+        readD = false;
+        cd = false;
+        writeD = false;
         gHelp = false;
-        editor = false;
         //-------+
         iName = null;
         sName = null;
@@ -438,10 +487,9 @@ public class Main {
         eDate = null;
         keys = 0;
         serNumber = 0L;
-        certName = null;
+        fileName = null;
         signAlg = null;
         bRead = false;
-        pFile = null;
         help = false;
         cFile = null;
     }
@@ -462,13 +510,6 @@ public class Main {
      */
     public void printError(String msg) {
         System.out.println("[" + ANSI_RED + "ERROR" + ANSI_RESET + "] " + msg);
-    }
-
-    /**
-     * Prints out in yellow: [J-CONSOLE>
-     */
-    public void printConsole() {
-        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> ");
     }
 
     /**

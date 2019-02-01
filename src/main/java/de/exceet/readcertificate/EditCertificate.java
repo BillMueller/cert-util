@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ReadCertificate {
+public class EditCertificate {
     /**
      * The function write() generates a certificate out of the inputs and saves it into the file (File file).
      *
