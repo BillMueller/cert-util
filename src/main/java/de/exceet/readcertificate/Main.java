@@ -117,9 +117,10 @@ public class Main {
 
     /**
      * Function to use the inputs from JCommander and call the needed functions with the given parameters <br>
+     *
      * @param main Main class object (object where the cd and exit variable is saved
-     * @param pF directory path where the user with the editor is right now
-     * @param ed EditDocument class object (needed to call the write() and read() function for document editing)
+     * @param pF   directory path where the user with the editor is right now
+     * @param ed   EditDocument class object (needed to call the write() and read() function for document editing)
      */
     private void run(Main main, String pF, EditDocument ed) {
         if (gHelp || help) {
@@ -367,7 +368,7 @@ public class Main {
      * @param dSignAlg   default signature algorithm the Certificate generator should use if it isn't set
      * @param main       main class object
      */
-    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber,String dSignAlg, Main main) {
+    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dSignAlg, Main main) {
         printInfo("checking inputs");
         iName = defaultString(iName, dIssuerName);
         sName = defaultString(sName, dSubjectName);
@@ -389,9 +390,10 @@ public class Main {
         KeyPair keypair = keyGen.generateKeyPair();
 
         File file = new File(main.pFile + "/" + fileName + ".crt");
+        File file2 = new File(main.pFile + "/private_key");
 
         try {
-            rc.write(file, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg);
+            rc.write(file, file2, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false);
         } catch (CertificateEncodingException e) {
             printError("Couldn't encode the certificate");
         } catch (SignatureException e) {
@@ -419,10 +421,10 @@ public class Main {
     /**
      * Starts the Certificate reader. Needs all default values for the reading parameters.
      *
-     * @param rc        readCertificate class object that's needed to start the Certificate reader in the that Class
-     * @param main      main class object
+     * @param rc   readCertificate class object that's needed to start the Certificate reader in the that Class
+     * @param main main class object
      */
-    private void startReader(EditCertificate rc,Main main) {
+    private void startReader(EditCertificate rc, Main main) {
         File file = new File(main.pFile + "/" + fileName + ".crt");
         try {
             rc.printCertDataToConsole(rc.read(file));

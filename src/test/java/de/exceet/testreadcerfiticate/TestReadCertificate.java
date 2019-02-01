@@ -90,7 +90,7 @@ public class TestReadCertificate {
             keyGen.initialize(512);
             keyPair = keyGen.generateKeyPair();
             try {
-                wc.write(new File("src/test/resources/testGeneratedCertificate.crt"), iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA");
+                wc.write(new File("src/test/resources/testGeneratedCertificate.crt"), new File(""), iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
                 testWrite = wc.read(new File("src/test/resources/testGeneratedCertificate.crt"));
             } catch (IOException ioe) {
                 ioe.printStackTrace();

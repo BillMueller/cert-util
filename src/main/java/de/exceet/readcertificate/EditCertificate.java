@@ -1,5 +1,6 @@
 package de.exceet.readcertificate;
 
+import org.apache.commons.io.FileUtils;
 import org.bouncycastle.x509.X509V1CertificateGenerator;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
@@ -31,7 +32,7 @@ public class EditCertificate {
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
      * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(File file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
+    public void write(File file, File privateKeyFile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
         Main main = new Main();
         main.printInfo("starting certificate generator");
 
@@ -68,6 +69,10 @@ public class EditCertificate {
         wr.write(output);
         wr.flush();
         wr.close();
+
+        if(!test) {
+            FileUtils.writeByteArrayToFile(privateKeyFile, keyPair.getPrivate().getEncoded());
+        }
     }
 
     /**
