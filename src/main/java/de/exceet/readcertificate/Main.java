@@ -58,6 +58,14 @@ public class Main {
 
     private String pFile;
 
+    /**
+     * Main function with the J-console input functionality <br>
+     * When called first it shows [J-CONSOLE> Enter directory> <br>
+     * After entering the working directory it will show [J-CONSOLE> C:/.../exampleFolder>
+     * when it's read for an input <br>
+     * After getting the input it will use JController to handle the input and it will call run() function to
+     * call the needed functions
+     */
     public void main() {
         Main main = new Main();
         EditDocument ed = new EditDocument();
@@ -107,6 +115,12 @@ public class Main {
         printInfo("exiting...");
     }
 
+    /**
+     * Function to use the inputs from JCommander and call the needed functions with the given parameters <br>
+     * @param main Main class object (object where the cd and exit variable is saved
+     * @param pF directory path where the user with the editor is right now
+     * @param ed EditDocument class object (needed to call the write() and read() function for document editing)
+     */
     private void run(Main main, String pF, EditDocument ed) {
         if (gHelp || help) {
             if (gHelp) {
@@ -260,7 +274,7 @@ public class Main {
      * @return if in != null -> in <br>
      * If in == null -> d
      */
-    public String defaultString(String in, String d) {
+    private String defaultString(String in, String d) {
         if (in == null) {
             in = d;
         }
@@ -276,7 +290,7 @@ public class Main {
      * @return if in > val -> in<br>
      * If in <= val -> d
      */
-    public int defaultInt(int in, int d, int val) {
+    private int defaultInt(int in, int d, int val) {
         if (in < val) {
             in = d;
         }

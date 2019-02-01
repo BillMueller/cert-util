@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 
-public class TestReadCertificate{
+public class TestReadCertificate {
     public static final String RESET = "\u001B[0m";
     public static final String YELLOW = "\u001B[93m";
 
@@ -40,7 +40,7 @@ public class TestReadCertificate{
      */
     public void testRead(Main main, EditCertificate rc, List<String> testRead) {
         //---- Test read() ----//
-        soY("[INFO] Testing read() function");
+        main.printInfo("[INFO] Testing read() function");
         try {
             testRead = rc.read(new File("src/test/resources/testCertificate.crt"));
         } catch (IOException ioe) {
@@ -62,7 +62,7 @@ public class TestReadCertificate{
         }
         assert testRead.get(8).equals("Hash Code: -40609");
         assert testRead.get(9).equals("Signature algorithm: SHA256withRSA. The algorithm type is RSA.");
-        soY("[INFO] Completed testing read() function");
+        main.printInfo("[INFO] Completed testing read() function");
         //---- +----------+ ----//
     }
 
@@ -75,7 +75,8 @@ public class TestReadCertificate{
      */
     public void testWrite(EditCertificate wc, List<String> testWrite) {
         //---- Test write() ----//
-        soY("[INFO] Testing write() function");
+        Main main = new Main();
+        main.printInfo("[INFO] Testing write() function");
         String iName = "CN=ca" + (int) (Math.random() * 100);
         String sName = "CN=owner" + (int) (Math.random() * 100);
         KeyPairGenerator keyGen;
@@ -105,7 +106,7 @@ public class TestReadCertificate{
         assert testWrite.get(3).equals("Issuer: " + iName);
         assert testWrite.get(4).equals("Subject: " + sName);
         assert testWrite.get(9).equals("Signature algorithm: SHA256withRSA. The algorithm type is RSA.");
-        soY("[INFO] Completed testing write() function");
+        main.printInfo("[INFO] Completed testing write() function");
         //---- +----------+ ----//
     }
 
@@ -116,19 +117,10 @@ public class TestReadCertificate{
      * @param main Main class (needed to call
      */
     public void testReadProperties(Main main) {
-        soY("[INFO] Testing readProperties() function");
+        main.printInfo("[INFO] Testing readProperties() function");
         assert main.readProperties("conffiig.properties", false, true).isEmpty();
         assert !main.readProperties("config.properties", false, true).isEmpty();
 
-        soY("[INFO] Completed testing readProperties() function");
-    }
-
-    /**
-     * Print out msg in yellow
-     *
-     * @param msg message to print
-     */
-    public void soY(String msg) {
-        System.out.println(YELLOW + msg + RESET);
+        main.printInfo("[INFO] Completed testing readProperties() function");
     }
 }
