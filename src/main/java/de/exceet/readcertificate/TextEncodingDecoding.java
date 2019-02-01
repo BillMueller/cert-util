@@ -11,8 +11,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.security.*;
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class TextEncodingDecoding {
     public static void main(String[] args) throws NoSuchAlgorithmException, Exception {
@@ -38,42 +37,36 @@ public class TextEncodingDecoding {
 
     public void code(String pFile, String file, int mode, KeyPair keyPair) throws Exception {
         Main main = new Main();
-
-        List<String> in = read(pFile, file), out = new ArrayList<>();
-        int ls = in.size(), c = 0;
-        System.out.println(ls);
-        while (c < ls) {
-            try {
-                if (mode == 0) {
-                    byte[] signed = encrypt(keyPair.getPrivate(), in.get(c));
-                    System.out.println(in.get(c));
-                    //FileUtils.writeByteArrayToFile(new File("C:/Users/jvansprang/Desktop/in.txt"), signed);
-                    try (FileOutputStream fos = new FileOutputStream("C:/Users/jvansprang/Desktop/in.txt")) {
-                        fos.write(signed);
-                    }
-                } else {
-                    byte[] verified;
-                    try (FileInputStream fis = new FileInputStream("C:/Users/jvansprang/Desktop/in.txt")) {
-                        verified = decrypt(keyPair.getPublic(), IOUtils.toByteArray(new BufferedReader(new FileReader("C:/Users/jvansprang/Desktop/in.txt")), Charset.defaultCharset()));
-                    }
-                    // byte[] verified = decrypt(keyPair.getPrivate(), FileUtils.readFileToByteArray(new File("C:/Users/jvansprang/Desktop/in.txt")));
-                    out.add(c, new String(verified, "UTF-8"));
-                    System.out.println(new String(verified, "UTF-8"));
-                    // FileUtils.writeByteArrayToFile(new File("C:/Users/jvansprang/Desktop/in.txt"), verified);
+        String in = read(pFile, file), out = null;
+        try {
+            if (mode == 0) {
+                byte[] signed = encrypt(keyPair.getPrivate(), in);
+                System.out.println(in);
+                //FileUtils.writeByteArrayToFile(new File("C:/Users/jvansprang/Desktop/in.txt"), signed);
+                try (FileOutputStream fos = new FileOutputStream("C:/Users/jvansprang/Desktop/in.txt")) {
+                    fos.write(signed);
                 }
-            } catch (NoSuchPaddingException nP) {
-                nP.printStackTrace();
-            } catch (NoSuchAlgorithmException e) {
-                main.printError("RSA algorithm isn't vlid");
-            } catch (InvalidKeyException e) {
-                main.printError("the public/private key was invalid");
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException bP) {
-            } catch (UnsupportedEncodingException e) {
-                main.printError("UTF-8 isn't supported");
+            } else {
+                byte[] verified;
+                try (FileInputStream fis = new FileInputStream("C:/Users/jvansprang/Desktop/in.txt")) {
+                    verified = decrypt(keyPair.getPublic(), IOUtils.toByteArray(new FileInputStream("C:/Users/jvansprang/Desktop/in.txt")));
+                }
+                // byte[] verified = decrypt(keyPair.getPrivate(), FileUtils.readFileToByteArray(new File("C:/Users/jvansprang/Desktop/in.txt")));
+                out = new String(verified, "UTF-8");
+                System.out.println(new String(verified, "UTF-8"));
+                // FileUtils.writeByteArrayToFile(new File("C:/Users/jvansprang/Desktop/in.txt"), verified);
             }
-            c++;
+        } catch (NoSuchPaddingException nP) {
+            nP.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            main.printError("RSA algorithm isn't vlid");
+        } catch (InvalidKeyException e) {
+            main.printError("the public/private key was invalid");
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException bP) {
+        } catch (UnsupportedEncodingException e) {
+            main.printError("UTF-8 isn't supported");
         }
         if (mode == 1) {
             write(pFile, file, out);
@@ -101,19 +94,15 @@ public class TextEncodingDecoding {
         return cipher.doFinal(encrypted);
     }
 
-    public void write(String pF, String f, List<String> msg) {
+    public void write(String pF, String f, String msg) {
         Main main = new Main();
         try {
             if (pF == null || f == null) {
                 main.printError("you have to enter a file name with parameter --file <filename>");
             } else {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(pF + "/" + f + ".txt"));
-                int ls = msg.size(), c = 0;
-                while (c < ls) {
-                    bw.write(msg.get(c));
-                    bw.newLine();
-                    c++;
-                }
+                bw.write(msg);
+                bw.newLine();
                 bw.close();
             }
         } catch (FileNotFoundException fE) {
@@ -124,9 +113,9 @@ public class TextEncodingDecoding {
         }
     }
 
-    public List<String> read(String pF, String f) {
+    public String read(String pF, String f) {
         Main main = new Main();
-        List<String> out = new ArrayList<>();
+        String out = "";
         try {
             int c = 0;
             FileReader fr;
@@ -136,7 +125,7 @@ public class TextEncodingDecoding {
                 BufferedReader br = new BufferedReader(new FileReader(pF + "/" + f + ".txt"));
                 String s;
                 while ((s = br.readLine()) != null) {
-                    out.add(c, s);
+                    out = out + "\n" + s;
                     c++;
                 }
                 br.close();
