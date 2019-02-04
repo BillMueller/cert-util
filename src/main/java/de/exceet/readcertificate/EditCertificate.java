@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 public class EditCertificate {
+
     /**
      * The function write() generates a certificate out of the inputs and saves it into the file (File file).
      *
@@ -70,8 +71,8 @@ public class EditCertificate {
         wr.flush();
         wr.close();
 
-        if(!test) {
-            FileUtils.writeByteArrayToFile(new File(file+"_private_key"), keyPair.getPrivate().getEncoded());
+        if (!test) {
+            FileUtils.writeByteArrayToFile(new File(file + "_private_key"), keyPair.getPrivate().getEncoded());
         }
     }
 
@@ -87,7 +88,7 @@ public class EditCertificate {
         Main main = new Main();
         main.printInfo("starting certificate reader");
         // define input stream to read the file
-        InputStream inStream = new FileInputStream(file+".crt");
+        InputStream inStream = new FileInputStream(file + ".crt");
 
         // safe the certificate in "cert"
         javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
@@ -137,7 +138,6 @@ public class EditCertificate {
         return output;
     }
 
-
     /**
      * function to test if the date (right now) is between date 1 and date 2.
      *
@@ -155,6 +155,11 @@ public class EditCertificate {
         }
     }
 
+    /**
+     * Prints the every element of the input list to the console with a [-] in front of it
+     *
+     * @param input the list to be printed out
+     */
     public void printCertDataToConsole(List<String> input) {
         Main main = new Main();
         main.printInfo(input.get(0));

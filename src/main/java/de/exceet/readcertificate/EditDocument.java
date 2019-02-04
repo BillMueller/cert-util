@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Scanner;
 
 public class EditDocument {
+
     /**
      * Reads a *.txt document and prints every line with line number to the console
      *

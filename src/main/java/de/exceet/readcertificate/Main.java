@@ -16,7 +16,7 @@ public class Main {
     public final String ANSI_YELLOW = "\u001B[93m";
     public final String ANSI_BLUE = "\u001B[94m";
 
-    @Parameter(names = {"setConfig","sc"}, description = "copies the config.properties file to a custom file and sets it as default config file")
+    @Parameter(names = {"setConfig", "sc"}, description = "copies the config.properties file to a custom file and sets it as default config file")
     public boolean setConfig;
     @Parameter(names = {"writeCertificate", "wc"}, description = "generate a new certificate")
     public boolean writeC;
@@ -156,7 +156,7 @@ public class Main {
             if (dt) {
                 printHelpToConsole(8);
             }
-            if(setConfig){
+            if (setConfig) {
                 printHelpToConsole(9);
             }
             if (cd) {
@@ -272,7 +272,8 @@ public class Main {
      * Prints out the help for the command.
      *
      * @param x tells the function the help of what command it should print<br>
-     *          (0 = writeCertificate, 1 = readCertificate, 2 = exit, 3 = readDocument, 4 = cd, 5 = writeDocument, 6 = general help)
+     *          (0 = writeCertificate, 1 = readCertificate, 2 = exit, 3 = readDocument, 4 = cd, 5 = writeDocument, 6 = general help, 7 = encodeDocument, 8 =
+     *          decodeDocument, 9 = setConfig)
      */
     private void printHelpToConsole(int x) {
         if (x == 0) {
@@ -659,6 +660,13 @@ public class Main {
         }
     }
 
+    /**
+     * This function sets the public variable configFile to the String file. If copy is true it also copies the config.properties file to the
+     * String file.
+     *
+     * @param file The file that should be set as config file
+     * @param copy if the program should copy the config.properties file to the String file
+     */
     public void setConfigFile(String file, boolean copy) {
         Properties prop;
         if (copy) {

@@ -12,6 +12,13 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 public class TextEncodingDecoding {
 
+    /**
+     * The main function that starts all the other functions needed for en- or decoding
+     * @param pFile the directory file
+     * @param fileName the name of the .txt file to be en- or decoded
+     * @param certName the name of the certificate used to en- or decode
+     * @param mode the mode (0 = encoding, 1 = decoding)
+     */
     public void main(String pFile, String fileName, String certName, int mode) {
         Main main = new Main();
         TextEncodingDecoding tc = new TextEncodingDecoding();
@@ -31,6 +38,14 @@ public class TextEncodingDecoding {
         }
     }
 
+    /**
+     * The function that encodes the .txt file given as input
+     * @param pFile the directory file
+     * @param file the name of the .txt file to be encoded
+     * @param pubKey the public key needed to encode a message
+     * @param validity if the certificate the public key was taken from is valid
+     * @throws IOException is thrown if the .txt file couldn't be found
+     */
     public void encode(String pFile, String file, PublicKey pubKey, boolean validity) throws IOException {
         Main main = new Main();
         String in = read(pFile, file);
@@ -60,6 +75,13 @@ public class TextEncodingDecoding {
         }
     }
 
+    /**
+     * The function that encodes the .txt file given as input
+     * @param pFile the directory file
+     * @param file the name of the .txt file to be decoded
+     * @param priKey the private key needed ti decode a message
+     * @throws IOException is thrown if the .txt file couldn't br found
+     */
     public void decode(String pFile, String file, PrivateKey priKey) throws IOException {
         Main main = new Main();
         String out = null;
@@ -84,6 +106,17 @@ public class TextEncodingDecoding {
         write(pFile, file, out);
     }
 
+    /**
+     * The encryption function
+     * @param publicKey public key needed for encryption
+     * @param message message as String
+     * @return the encrypted message
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
     public byte[] encrypt(PublicKey publicKey, String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         Main main = new Main();
         main.printInfo("encrypting Text");
@@ -93,6 +126,17 @@ public class TextEncodingDecoding {
         return cipher.doFinal(message.getBytes());
     }
 
+    /**
+     * The encryption function
+     * @param privateKey public key needed for encryption
+     * @param encrypted encrypted message as byte array
+     * @return the decrypted message as byte array
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
     public byte[] decrypt(PrivateKey privateKey, byte[] encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         Main main = new Main();
         main.printInfo("decrypting Text");
@@ -102,6 +146,12 @@ public class TextEncodingDecoding {
         return cipher.doFinal(encrypted);
     }
 
+    /**
+     * Writes the String msg to the file f at the directory pF
+     * @param pF directory where the .txt file is
+     * @param f file name of the .txt file
+     * @param msg msg to be written
+     */
     public void write(String pF, String f, String msg) {
         Main main = new Main();
         try {
@@ -130,6 +180,12 @@ public class TextEncodingDecoding {
         }
     }
 
+    /**
+     * Reads the text of the file f at the directory pF and returns it as a String with \n for every new line
+     * @param pF directory where the .txt file is
+     * @param f file name of the .txt file
+     * @return msg that has been read
+     */
     public String read(String pF, String f) {
         Main main = new Main();
         String out = "";
@@ -159,6 +215,14 @@ public class TextEncodingDecoding {
         return out;
     }
 
+    /**
+     * Gets a private key from a document at the file
+     * @param file file where the private key is saved (as byte[])
+     * @return the private key
+     * @throws NoSuchAlgorithmException
+     * @throws IOException
+     * @throws InvalidKeySpecException
+     */
     public PrivateKey getPrivateKey(String file) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         Main main = new Main();
         main.printInfo("getting private key");
@@ -166,6 +230,13 @@ public class TextEncodingDecoding {
         return kf.generatePrivate(new PKCS8EncodedKeySpec(FileUtils.readFileToByteArray(new File(file))));
     }
 
+    /**
+     * Gets a public key from the certificate at the file
+     * @param file file where the certificate is saved
+     * @return the public key
+     * @throws CertificateException
+     * @throws IOException
+     */
     public PublicKey getPublicKey(String file) throws CertificateException, IOException {
         Main main = new Main();
         main.printInfo("getting public key");
@@ -175,6 +246,14 @@ public class TextEncodingDecoding {
         return cert.getPublicKey();
     }
 
+    /**
+     * Checks the validity of the certificate at the file
+     * @param file file where the certificate is saved
+     * @return true if the certificate is valid <br>
+     *     false if the certificate isn't valid
+     * @throws CertificateException
+     * @throws IOException
+     */
     public boolean getValidity(String file) throws CertificateException, IOException {
         Main main = new Main();
         EditCertificate ec = new EditCertificate();
