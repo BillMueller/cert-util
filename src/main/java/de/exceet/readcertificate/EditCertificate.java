@@ -32,7 +32,7 @@ public class EditCertificate {
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
      * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(File file, File privateKeyFile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
+    public void write(String file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
         Main main = new Main();
         main.printInfo("starting certificate generator");
 
@@ -62,16 +62,16 @@ public class EditCertificate {
         output = output + X509Factory.END_CERT;
 
         // System.out.println(output);
-        main.printInfo("writing certificate to " + file);
+        main.printInfo("writing certificate to " + file + ".crt");
 
         // write the String into the file ("mycertificate.crt")
-        FileWriter wr = new FileWriter(file);
+        FileWriter wr = new FileWriter(file + ".crt");
         wr.write(output);
         wr.flush();
         wr.close();
 
         if(!test) {
-            FileUtils.writeByteArrayToFile(privateKeyFile, keyPair.getPrivate().getEncoded());
+            FileUtils.writeByteArrayToFile(new File(file+"_private_key"), keyPair.getPrivate().getEncoded());
         }
     }
 
@@ -83,11 +83,11 @@ public class EditCertificate {
      * @throws IOException                              Needed if some of the inputs are wrong
      * @throws javax.security.cert.CertificateException Needed if some of the inputs are wrong
      */
-    public List<String> read(File file) throws IOException, javax.security.cert.CertificateException {
+    public List<String> read(String file) throws IOException, javax.security.cert.CertificateException {
         Main main = new Main();
         main.printInfo("starting certificate reader");
         // define input stream to read the file
-        InputStream inStream = new FileInputStream(file);
+        InputStream inStream = new FileInputStream(file+".crt");
 
         // safe the certificate in "cert"
         javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
@@ -103,7 +103,7 @@ public class EditCertificate {
         Date date2 = cert.getNotAfter();
         String algorithm = cert.getSigAlgName();
         boolean dateVal;
-        List<String> output = new ArrayList<String>();
+        List<String> output = new ArrayList<>();
 
         // test if the certificate is still valid
         if (testDate(date1, date2)) {

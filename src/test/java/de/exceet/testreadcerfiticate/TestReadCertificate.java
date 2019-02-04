@@ -40,14 +40,14 @@ public class TestReadCertificate {
      */
     public void testRead(Main main, EditCertificate rc, List<String> testRead) {
         //---- Test read() ----//
-        main.printInfo("[INFO] Testing read() function");
+        main.printInfo("Testing read() function");
         try {
-            testRead = rc.read(new File("src/test/resources/testCertificate.crt"));
+            testRead = rc.read("src/test/resources/testCertificate");
         } catch (IOException ioe) {
-            System.out.println("[ERROR] IOException");
+            main.printError("IOException");
             ioe.printStackTrace();
         } catch (CertificateException ce) {
-            System.out.println("[ERROR] Missing the certificate test file or wrong path file");
+            main.printError("Missing the certificate test file or wrong path file");
             ce.printStackTrace();
         }
         //----+
@@ -62,7 +62,7 @@ public class TestReadCertificate {
         }
         assert testRead.get(8).equals("Hash Code: -40609");
         assert testRead.get(9).equals("Signature algorithm: SHA256withRSA. The algorithm type is RSA.");
-        main.printInfo("[INFO] Completed testing read() function");
+        main.printInfo("Completed testing read() function");
         //---- +----------+ ----//
     }
 
@@ -76,7 +76,7 @@ public class TestReadCertificate {
     public void testWrite(EditCertificate wc, List<String> testWrite) {
         //---- Test write() ----//
         Main main = new Main();
-        main.printInfo("[INFO] Testing write() function");
+        main.printInfo("Testing write() function");
         String iName = "CN=ca" + (int) (Math.random() * 100);
         String sName = "CN=owner" + (int) (Math.random() * 100);
         KeyPairGenerator keyGen;
@@ -90,8 +90,8 @@ public class TestReadCertificate {
             keyGen.initialize(512);
             keyPair = keyGen.generateKeyPair();
             try {
-                wc.write(new File("src/test/resources/testGeneratedCertificate.crt"), new File(""), iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
-                testWrite = wc.read(new File("src/test/resources/testGeneratedCertificate.crt"));
+                wc.write("src/test/resources/testGeneratedCertificate", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
+                testWrite = wc.read("src/test/resources/testGeneratedCertificate");
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (Exception e) {
@@ -106,7 +106,7 @@ public class TestReadCertificate {
         assert testWrite.get(3).equals("Issuer: " + iName);
         assert testWrite.get(4).equals("Subject: " + sName);
         assert testWrite.get(9).equals("Signature algorithm: SHA256withRSA. The algorithm type is RSA.");
-        main.printInfo("[INFO] Completed testing write() function");
+        main.printInfo("Completed testing write() function");
         //---- +----------+ ----//
     }
 
@@ -117,10 +117,12 @@ public class TestReadCertificate {
      * @param main Main class (needed to call
      */
     public void testReadProperties(Main main) {
-        main.printInfo("[INFO] Testing readProperties() function");
-        assert main.readProperties("conffiig.properties", false, true).isEmpty();
-        assert !main.readProperties("config.properties", false, true).isEmpty();
-
-        main.printInfo("[INFO] Completed testing readProperties() function");
+        main.printInfo("Testing readProperties() function");
+        try {
+            assert main.readProperties("conffiig.properties", false, true).isEmpty();
+            assert !main.readProperties("config.properties", false, true).isEmpty();
+        }catch(IOException ioe){
+        }
+        main.printInfo("Completed testing readProperties() function");
     }
 }
