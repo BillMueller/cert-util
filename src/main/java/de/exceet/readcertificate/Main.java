@@ -65,6 +65,12 @@ public class Main {
     public boolean copyConfig;
     @Parameter(names = "--directory", description = "set the directory name")
     public String directoryName;
+    @Parameter(names = "--certTargetDir", description = "set the custom certificate target folder")
+    public String certTargetDirectory;
+    @Parameter(names = "--certDirectory", description = "set the custom certificate folder")
+    public String certDirectory;
+    @Parameter(names = "--docDirectory", description = "set the custom document folder")
+    public String docDirectory;
 
     private String pFile;
     public String configFile = "default";
@@ -182,7 +188,7 @@ public class Main {
                             dProps = readProperties(configFile, true, false);
                         } catch (IOException ioe) {
                             printError("no file could be found at " + defaultConfigFileName);
-                            printInfo("The name of the config file must be config.properties");
+                            printInfo("the name of the config file must be config.properties");
                             printInfo("using default config.properties file");
                         }
                     } else {
@@ -247,16 +253,19 @@ public class Main {
                         else
                             startReader(ec, main);
                     } else if (et) {
+                        certDirectory = defaultString(certDirectory, main.pFile);
+                        docDirectory = defaultString(docDirectory, main.pFile);
                         if (fileName == null || certFileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFileName");
+                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
                         else
-                            tc.main(main.pFile, fileName, certFileName, 0);
+                            tc.main(certDirectory, fileName, certFileName, docDirectory, 0);
 
                     } else if (dt) {
+                        docDirectory = defaultString(docDirectory, main.pFile);
                         if (fileName == null || certFileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFileName");
+                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
                         else
-                            tc.main(main.pFile, fileName, certFileName, 1);
+                            tc.main(main.pFile, fileName, certFileName, docDirectory, 1);
                     } else if (setConfig) {
                         if (directoryName == null)
                             main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
@@ -287,6 +296,7 @@ public class Main {
             printHelp("\t\t--signatureAlgorithm\t<signature algorithm>");
             printHelp("\t\t--file\t\t\t<name of the generated certificate>");
             printHelp("\t\t--read\t\t\t[enables read]");
+            printHelp("\t\t--certTargetDir\t\t<the target directory of the certificate>");
         } else if (x == 1) {
             printHelp("readCertificate | rc \t\t[reads a certificate]");
             printHelp("\t\t--file\t\t\t<name of the file to read>");
@@ -317,10 +327,13 @@ public class Main {
             printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
             printHelp("\t\t--file\t\t\t<name of the file to encode>");
             printHelp("\t\t--certFile\t\t<name of the certificate file (The name you entered for the writeCertificate command)>");
+            printHelp("\t\t--certDirectory\t\t<directory of the certificate>");
+            printHelp("\t\t--docDirectory\t\t<directory of the document>");
         } else if (x == 8) {
             printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
             printHelp("\t\t--file\t\t\t<name of the file to decode>");
             printHelp("\t\t--certFile\t\t<name of the certificate file (The name you entered for the writeCertificate command)>");
+            printHelp("\t\t--docDirectory\t\t<directory of the document>");
         } else if (x == 9) {
             printHelp("setConfig | sc \t\t\t[changes the position of the config file]");
             printHelp("\t\t--directory\t\t<name of the new directory of the config.properties file>");
@@ -450,8 +463,10 @@ public class Main {
         keyGen.initialize(keys);
         KeyPair keypair = keyGen.generateKeyPair();
 
+        String pathFile = defaultString(certTargetDirectory, main.pFile);
+
         try {
-            rc.write(main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false);
+            rc.write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false);
         } catch (CertificateEncodingException e) {
             printError("Couldn't encode the certificate");
         } catch (SignatureException e) {
@@ -466,7 +481,7 @@ public class Main {
 
         if (bRead) {
             try {
-                rc.printCertDataToConsole(rc.read(main.pFile + "/" + fileName));
+                rc.printCertDataToConsole(rc.read(pathFile + "/" + fileName));
             } catch (IOException e) {
                 printError("[ERROR] Couldn't find the certificate to read");
             } catch (CertificateException e) {
@@ -516,8 +531,8 @@ public class Main {
                     prop.load(input);
                 else
                     throw new IOException();
-
-                printInfo("successfully loaded settings from " + configFileName);
+                if (printMsg)
+                    printInfo("successfully loaded settings from " + configFileName);
 
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -567,6 +582,9 @@ public class Main {
         certFileName = null;
         lines = 0;
         copyConfig = false;
+        certTargetDirectory = null;
+        certDirectory = null;
+        docDirectory = null;
     }
 
     /**
@@ -671,8 +689,9 @@ public class Main {
         Properties prop;
         if (copy) {
             try {
-                prop = readProperties("config.properties", true, true);
+                prop = readProperties("config.properties", false, true);
                 prop.store(new FileOutputStream(file), "#'default' can be used for: defaultExDate, defaultSerialNumber, defaultValidity, defaultStDate");
+                printInfo("successfully copied the config.properties file");
             } catch (IOException ioe) {
                 printError("default config file couldn't be found");
                 printError("copy failed");

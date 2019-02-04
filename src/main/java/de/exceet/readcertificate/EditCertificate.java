@@ -33,7 +33,7 @@ public class EditCertificate {
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
      * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(String file, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
+    public void write(String file, String pKfile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
         Main main = new Main();
         main.printInfo("starting certificate generator");
 
@@ -72,7 +72,7 @@ public class EditCertificate {
         wr.close();
 
         if (!test) {
-            FileUtils.writeByteArrayToFile(new File(file + "_private_key"), keyPair.getPrivate().getEncoded());
+            FileUtils.writeByteArrayToFile(new File(pKfile + "_private_key"), keyPair.getPrivate().getEncoded());
         }
     }
 

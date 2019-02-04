@@ -14,19 +14,20 @@ public class TextEncodingDecoding {
 
     /**
      * The main function that starts all the other functions needed for en- or decoding
-     * @param pFile the directory file
+     *
+     * @param pFile    the directory file
      * @param fileName the name of the .txt file to be en- or decoded
      * @param certName the name of the certificate used to en- or decode
-     * @param mode the mode (0 = encoding, 1 = decoding)
+     * @param mode     the mode (0 = encoding, 1 = decoding)
      */
-    public void main(String pFile, String fileName, String certName, int mode) {
+    public void main(String pFile, String fileName, String certName, String docDirect, int mode) {
         Main main = new Main();
         TextEncodingDecoding tc = new TextEncodingDecoding();
         try {
             if (mode == 0)
-                tc.encode(pFile, fileName, tc.getPublicKey(pFile + "/" + certName + ".crt"), getValidity(pFile + "/" + certName + ".crt"));
+                tc.encode(docDirect + "/" + fileName + ".txt", tc.getPublicKey(pFile + "/" + certName + ".crt"), getValidity(pFile + "/" + certName + ".crt"), false);
             else
-                tc.decode(pFile, fileName, tc.getPrivateKey(pFile + "/" + certName + "_private_key"));
+                tc.decode(docDirect + "/" + fileName + ".txt", tc.getPrivateKey(pFile + "/" + certName + "_private_key"), false);
         } catch (IOException e) {
             main.printError("file couldn't be found");
         } catch (CertificateException e) {
@@ -40,57 +41,77 @@ public class TextEncodingDecoding {
 
     /**
      * The function that encodes the .txt file given as input
-     * @param pFile the directory file
-     * @param file the name of the .txt file to be encoded
-     * @param pubKey the public key needed to encode a message
+     *
+     * @param file     the name of the .txt file to be encoded
+     * @param pubKey   the public key needed to encode a message
      * @param validity if the certificate the public key was taken from is valid
      * @throws IOException is thrown if the .txt file couldn't be found
      */
-    public void encode(String pFile, String file, PublicKey pubKey, boolean validity) throws IOException {
+    public void encode(String file, PublicKey pubKey, boolean validity, boolean certificate) throws IOException {
         Main main = new Main();
-        String in = read(pFile, file);
         if (!validity)
             main.printError("The certificate isn't valid. Please contact the owner of the certificate to get a new one");
         else {
-            if (in != null) {
-                try {
-                    byte[] signed = encrypt(pubKey, in);
-                    try (FileOutputStream fos = new FileOutputStream(pFile + "/" + file + ".txt")) {
-                        fos.write(signed);
+            try {
+                if (certificate) {
+                    byte[] verified;
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        verified = decryptCert(pubKey, IOUtils.toByteArray(fis));
+                        String out = new String(verified, "UTF-8");
+                        write(file, out);
                     }
-                } catch (NoSuchPaddingException nP) {
-                    nP.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    main.printError("RSA algorithm isn't valid");
-                } catch (InvalidKeyException e) {
-                    main.printError("the public/private key was invalid");
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (BadPaddingException bP) {
-                    bP.printStackTrace();
-                } catch (UnsupportedEncodingException e) {
-                    main.printError("UTF-8 isn't supported");
+                } else {
+                    String in = read(file);
+                    if (in != null) {
+                        byte[] signed = encrypt(pubKey, in);
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
+                            fos.write(signed);
+                        }
+                    }
                 }
+            } catch (NoSuchPaddingException nP) {
+                nP.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                main.printError("RSA algorithm isn't valid");
+            } catch (InvalidKeyException e) {
+                main.printError("the public/private key was invalid");
+            } catch (IllegalBlockSizeException e) {
+                main.printError("the text is too long for the encoding (max. 501 bytes)");
+            } catch (BadPaddingException bP) {
+                bP.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
+                main.printError("UTF-8 isn't supported");
             }
+
         }
     }
 
     /**
      * The function that encodes the .txt file given as input
-     * @param pFile the directory file
-     * @param file the name of the .txt file to be decoded
+     *
+     * @param file   the name of the .txt file to be decoded
      * @param priKey the private key needed ti decode a message
-     * @throws IOException is thrown if the .txt file couldn't br found
+     * @throws IOException is thrown if the .txt file couldn't be found
      */
-    public void decode(String pFile, String file, PrivateKey priKey) throws IOException {
+    public void decode(String file, PrivateKey priKey, boolean certificate) throws IOException {
         Main main = new Main();
         String out = null;
         try {
-            byte[] verified;
-            try (FileInputStream fis = new FileInputStream(pFile + "/" + file + ".txt")) {
-                verified = decrypt(priKey, IOUtils.toByteArray(fis));
+            if (certificate) {
+                String in = read(file);
+                if (in != null) {
+                    byte[] signed = encryptCert(priKey, in);
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        fos.write(signed);
+                    }
+                }
+            } else {
+                byte[] verified;
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    verified = decrypt(priKey, IOUtils.toByteArray(fis));
+                    out = new String(verified, "UTF-8");
+                }
             }
-            out = new String(verified, "UTF-8");
         } catch (NoSuchPaddingException nP) {
             nP.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -103,13 +124,14 @@ public class TextEncodingDecoding {
         } catch (UnsupportedEncodingException e) {
             main.printError("UTF-8 isn't supported");
         }
-        write(pFile, file, out);
+        write(file, out);
     }
 
     /**
      * The encryption function
+     *
      * @param publicKey public key needed for encryption
-     * @param message message as String
+     * @param message   message as String
      * @return the encrypted message
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -127,9 +149,10 @@ public class TextEncodingDecoding {
     }
 
     /**
-     * The encryption function
+     * The decryption function
+     *
      * @param privateKey public key needed for encryption
-     * @param encrypted encrypted message as byte array
+     * @param encrypted  encrypted message as byte array
      * @return the decrypted message as byte array
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
@@ -147,19 +170,61 @@ public class TextEncodingDecoding {
     }
 
     /**
+     * The encryption function
+     *
+     * @param privateKey public key needed for encryption
+     * @param message    message as String
+     * @return the encrypted message
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public byte[] encryptCert(PrivateKey privateKey, String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        Main main = new Main();
+        main.printInfo("encrypting certificate");
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, privateKey);
+
+        return cipher.doFinal(message.getBytes());
+    }
+
+    /**
+     * The decryption function
+     *
+     * @param publicKey public key needed for encryption
+     * @param encrypted encrypted message as byte array
+     * @return the decrypted message as byte array
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     * @throws InvalidKeyException
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    public byte[] decryptCert(PublicKey publicKey, byte[] encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        Main main = new Main();
+        main.printInfo("decrypting certificate");
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, publicKey);
+
+        return cipher.doFinal(encrypted);
+    }
+
+    /**
      * Writes the String msg to the file f at the directory pF
-     * @param pF directory where the .txt file is
-     * @param f file name of the .txt file
+     *
+     * @param f   file name of the .txt file
      * @param msg msg to be written
      */
-    public void write(String pF, String f, String msg) {
+    public void write(String f, String msg) {
         Main main = new Main();
         try {
-            if (pF == null || f == null) {
+            if (f == null) {
                 main.printError("you have to enter a file name with parameter --file <filename>");
             } else {
-                main.printInfo("writing text to " + f + ".txt");
-                BufferedWriter bw = new BufferedWriter(new FileWriter(pF + "/" + f + ".txt"));
+                main.printInfo("writing text to " + f);
+                BufferedWriter bw = new BufferedWriter(new FileWriter(f));
                 String[] l = msg.split("\n");
                 int ls = l.length, c = 0;
                 while (c < ls) {
@@ -182,20 +247,20 @@ public class TextEncodingDecoding {
 
     /**
      * Reads the text of the file f at the directory pF and returns it as a String with \n for every new line
-     * @param pF directory where the .txt file is
+     *
      * @param f file name of the .txt file
      * @return msg that has been read
      */
-    public String read(String pF, String f) {
+    public String read(String f) {
         Main main = new Main();
         String out = "";
         try {
             int c = 0;
-            if (pF == null || f == null) {
+            if (f == null) {
                 main.printError("you have to enter a file name with parameter --file <filename>");
             } else {
-                main.printInfo("reading text from " + f + ".txt");
-                BufferedReader br = new BufferedReader(new FileReader(pF + "/" + f + ".txt"));
+                main.printInfo("reading text from " + f);
+                BufferedReader br = new BufferedReader(new FileReader(f));
                 String s;
                 out = br.readLine();
                 while ((s = br.readLine()) != null) {
@@ -217,6 +282,7 @@ public class TextEncodingDecoding {
 
     /**
      * Gets a private key from a document at the file
+     *
      * @param file file where the private key is saved (as byte[])
      * @return the private key
      * @throws NoSuchAlgorithmException
@@ -232,6 +298,7 @@ public class TextEncodingDecoding {
 
     /**
      * Gets a public key from the certificate at the file
+     *
      * @param file file where the certificate is saved
      * @return the public key
      * @throws CertificateException
@@ -248,9 +315,10 @@ public class TextEncodingDecoding {
 
     /**
      * Checks the validity of the certificate at the file
+     *
      * @param file file where the certificate is saved
      * @return true if the certificate is valid <br>
-     *     false if the certificate isn't valid
+     * false if the certificate isn't valid
      * @throws CertificateException
      * @throws IOException
      */

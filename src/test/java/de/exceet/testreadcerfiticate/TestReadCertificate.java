@@ -90,7 +90,7 @@ public class TestReadCertificate {
             keyGen.initialize(512);
             keyPair = keyGen.generateKeyPair();
             try {
-                wc.write("src/test/resources/testGeneratedCertificate", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
+                wc.write("src/test/resources/testGeneratedCertificate", "", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
                 testWrite = wc.read("src/test/resources/testGeneratedCertificate");
             } catch (IOException ioe) {
                 ioe.printStackTrace();
@@ -121,7 +121,7 @@ public class TestReadCertificate {
         try {
             assert main.readProperties("conffiig.properties", false, true).isEmpty();
             assert !main.readProperties("config.properties", false, true).isEmpty();
-        }catch(IOException ioe){
+        } catch (IOException ioe) {
         }
         main.printInfo("Completed testing readProperties() function");
     }
