@@ -10,12 +10,11 @@ import java.security.cert.CertificateEncodingException;
 import java.util.*;
 
 public class Main {
-    public boolean colored = true;
-    public final String ANSI_RESET = "\u001B[0m";
-    public final String ANSI_RED = "\u001B[91m";
-    public final String ANSI_GREEN = "\u001B[92m";
-    public final String ANSI_YELLOW = "\u001B[93m";
-    public final String ANSI_BLUE = "\u001B[94m";
+    public String ANSI_RESET = "\u001B[0m";
+    public String ANSI_ERROR = "\u001B[91m";
+    public String ANSI_HELP = "\u001B[92m";
+    public String ANSI_INPUT = "\u001B[93m";
+    public String ANSI_OUTPUT = "\u001B[94m";
 
     @Parameter(names = {"setConfig", "sc"}, description = "copies the config.properties file to a custom file and sets it as default config file")
     public boolean setConfig;
@@ -74,7 +73,12 @@ public class Main {
     public String certDirectory;
     @Parameter(names = "--docDirectory", description = "set the custom document folder")
     public String docDirectory;
+    @Parameter(names = "--style", description = "set a style")
+    public String cStyle;
+    @Parameter(names = "--toggle", description = "toggle the style")
+    public boolean styleToggle;
 
+    public int style = 0;
     private String pFile;
     public String configFile = "default";
 
@@ -184,104 +188,131 @@ public class Main {
                 if (cd) {
                     main.cd = true;
                 } else {
-                    String defaultConfigFileName = "config.properties";
-                    EditCertificate ec = new EditCertificate();
-                    TextEncodingDecoding tc = new TextEncodingDecoding();
-                    Properties dProps = new Properties();
-
-                    if (!configFile.equals("default")) {
-                        try {
-                            dProps = readProperties(configFile, true, false);
-                        } catch (IOException ioe) {
-                            printError("no file could be found at " + defaultConfigFileName);
-                            printInfo("the name of the config file must be config.properties");
-                            printInfo("using default config.properties file");
+                    if (cs) {
+                        if (cStyle == null) {
+                            cStyle = "somestring";
+                            if (!styleToggle) {
+                                style = 0;
+                            }
+                        }
+                        if (cStyle.equals("default") || cStyle.equals("d")) {
+                            style = 0;
+                        } else if (cStyle.equals("non-colored") || cStyle.equals("nc")) {
+                            style = 1;
+                        } else if (cStyle.equals("one-colored") || cStyle.equals("oc")) {
+                            style = 2;
+                        } else if (cStyle.equals("one-lettered") || cStyle.equals("ol")) {
+                            style = 3;
+                        } else if (cStyle.equals("simple") || cStyle.equals("s")) {
+                            style = 4;
+                        } else if (styleToggle) {
+                            style = (style + 1) % 5;
+                        } else if (!cStyle.equals("somestring")) {
+                            printError("the style " + cStyle + " doesn't exist");
+                        }
+                        if (style == 2) {
+                            ANSI_ERROR = ANSI_INPUT;
+                            ANSI_HELP = ANSI_INPUT;
+                            ANSI_OUTPUT = ANSI_INPUT;
+                        } else {
+                            ANSI_ERROR = "\u001B[91m";
+                            ANSI_HELP = "\u001B[92m";
+                            ANSI_OUTPUT = "\u001B[94m";
                         }
                     } else {
-                        try {
-                            dProps = readProperties(defaultConfigFileName, true, true);
-                        } catch (Exception e) {
-                            printError("default config file couldn't be found");
-                            printInfo("using default configs");
+                        String defaultConfigFileName = "config.properties";
+                        EditCertificate ec = new EditCertificate();
+                        TextEncodingDecoding tc = new TextEncodingDecoding();
+                        Properties dProps = new Properties();
+
+                        if (!configFile.equals("default")) {
+                            try {
+                                dProps = readProperties(configFile, true, false);
+                            } catch (IOException ioe) {
+                                printError("no file could be found at " + defaultConfigFileName);
+                                printInfo("the name of the config file must be config.properties");
+                                printInfo("using default config.properties file");
+                            }
+                        } else {
+                            try {
+                                dProps = readProperties(defaultConfigFileName, true, true);
+                            } catch (Exception e) {
+                                printError("default config file couldn't be found");
+                                printInfo("using default configs");
+                            }
                         }
-                    }
 
-                    String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-                    String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-                    int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
-                    String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-                    String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-                    String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-                    String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-                    String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-                    Date dStDate, dExDate = new Date();
-                    long milSecValid = 31536000000L, dSerNumber;
+                        String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+                        String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+                        int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
+                        String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+                        String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+                        String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+                        String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+                        String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+                        Date dStDate, dExDate = new Date();
+                        long milSecValid = 31536000000L, dSerNumber;
 
-                    if (dPropsStDate.equals("default"))
-                        dStDate = new Date();
-                    else
-                        dStDate = stringToDate(dPropsStDate);
-
-                    if (!dPropsValidity.equals("default"))
-                        milSecValid = Long.valueOf(dPropsValidity);
-
-                    if (dPropsExDate.equals("default"))
-                        dExDate.setTime(dStDate.getTime() + milSecValid);
-                    else
-                        dExDate = stringToDate(dPropsExDate);
-
-                    if (dPropsSerNumber.equals("default"))
-                        dSerNumber = new Date().getTime();
-                    else
-                        dSerNumber = Long.valueOf(dPropsSerNumber);
-
-                    if (readD) {
-                        if (fileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename>");
+                        if (dPropsStDate.equals("default"))
+                            dStDate = new Date();
                         else
-                            ed.read(fileName, pF, main);
-                    } else if (writeD) {
-                        if (fileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename>");
-                        else {
-                            lines = main.defaultInt(lines, 10, 1);
-                            fileName = main.defaultString(fileName, "auto_generated_file.txt");
-                            ed.write(fileName, main.pFile, main, lines);
-                        }
-                    } else if (writeC) {
-                        if (fileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename>");
-                        else
-                            startWriter(ec, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg, main);
-                    } else if (readC) {
-                        if (fileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename>");
-                        else
-                            startReader(ec, main);
-                    } else if (et) {
-                        certDirectory = defaultString(certDirectory, main.pFile);
-                        docDirectory = defaultString(docDirectory, main.pFile);
-                        if (fileName == null || certFileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
-                        else
-                            tc.main(certDirectory, fileName, certFileName, docDirectory, 0);
+                            dStDate = stringToDate(dPropsStDate);
 
-                    } else if (dt) {
-                        docDirectory = defaultString(docDirectory, main.pFile);
-                        if (fileName == null || certFileName == null)
-                            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
+                        if (!dPropsValidity.equals("default"))
+                            milSecValid = Long.valueOf(dPropsValidity);
+
+                        if (dPropsExDate.equals("default"))
+                            dExDate.setTime(dStDate.getTime() + milSecValid);
                         else
-                            tc.main(main.pFile, fileName, certFileName, docDirectory, 1);
-                    } else if (setConfig) {
-                        if (directoryName == null)
-                            main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
+                            dExDate = stringToDate(dPropsExDate);
+
+                        if (dPropsSerNumber.equals("default"))
+                            dSerNumber = new Date().getTime();
                         else
-                            setConfigFile(directoryName + "/config.properties", copyConfig);
-                    } else if (cs) {
-                        if(colored = !colored){
-                            printInfo("Successfully switched to colored mode");
-                        }else{
-                            printInfo("Successfully switched to non-colored mode");
+                            dSerNumber = Long.valueOf(dPropsSerNumber);
+
+                        if (readD) {
+                            if (fileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename>");
+                            else
+                                ed.read(fileName, pF, main);
+                        } else if (writeD) {
+                            if (fileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename>");
+                            else {
+                                lines = main.defaultInt(lines, 10, 1);
+                                fileName = main.defaultString(fileName, "auto_generated_file.txt");
+                                ed.write(fileName, main.pFile, main, lines);
+                            }
+                        } else if (writeC) {
+                            if (fileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename>");
+                            else
+                                startWriter(ec, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg, main);
+                        } else if (readC) {
+                            if (fileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename>");
+                            else
+                                startReader(ec, main);
+                        } else if (et) {
+                            certDirectory = defaultString(certDirectory, main.pFile);
+                            docDirectory = defaultString(docDirectory, main.pFile);
+                            if (fileName == null || certFileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
+                            else
+                                tc.main(certDirectory, fileName, certFileName, docDirectory, 0);
+
+                        } else if (dt) {
+                            docDirectory = defaultString(docDirectory, main.pFile);
+                            if (fileName == null || certFileName == null)
+                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
+                            else
+                                tc.main(main.pFile, fileName, certFileName, docDirectory, 1);
+                        } else if (setConfig) {
+                            if (directoryName == null)
+                                main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
+                            else
+                                setConfigFile(directoryName + "/config.properties", copyConfig);
                         }
                     }
                 }
@@ -315,21 +346,36 @@ public class Main {
         } else if (x == 2) {
             printHelp("exit\t\t\t\t[exits the console]");
         } else if (x == 3) {
-            printHelp("readDocument | rd\t\t[reads a *.txt file with your filename]");
+            if (style < 3) {
+                printHelp("readDocument | rd\t\t[reads a *.txt file with your file name]");
+            } else {
+                printHelp("readDocument | rd\t\t\t[reads a *.txt file with your file name]");
+            }
             printHelp("\t\t--file\t\t\t<name of the file to read>");
         } else if (x == 4) {
             printHelp("changeDirectory | cd\t\t[gives you the option to select another directory]");
         } else if (x == 5) {
-            printHelp("writeDocument | wd\t\t[writes a *.txt file to you filename]");
+            if (style < 3) {
+                printHelp("writeDocument | wd\t\t[writes a *.txt file to you file name]");
+            } else {
+                printHelp("writeDocument | wd\t\t\t[writes a *.txt file to you file name]");
+            }
             printHelp("\t\t--file\t\t\t<name of the file to write>");
             printHelp("\t\t--lines\t\t\t<amount of lines you want to write>");
         } else if (x == 6) {
             printHelp("writeCertificate | wc\t\t[generates a certificate]");
             printHelp("readCertificate | rc\t\t[reads a certificate]");
-            printHelp("writeDocument | wd\t\t[writes a *.txt file to you filename]");
-            printHelp("readDocument | rd\t\t[reads a *.txt file with your filename]");
-            printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
-            printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
+            if (style < 3) {
+                printHelp("writeDocument | wd\t\t[writes a *.txt file to you file name]");
+                printHelp("readDocument | rd\t\t[reads a *.txt file with your file name]");
+                printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
+                printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
+            } else {
+                printHelp("writeDocument | wd\t\t\t[writes a *.txt file to you file name]");
+                printHelp("readDocument | rd\t\t\t[reads a *.txt file with your file name]");
+                printHelp("encodeDocument | ed\t\t\t[encodes a *.txt file at your file name]");
+                printHelp("decodeDocument | dd\t\t\t[decodes a *.txt file at your file name]");
+            }
             printHelp("setConfig | sc \t\t\t[changes the position of the config file]");
             printHelp("changeDirectory | cd\t\t[gives you the option to select another directory]");
             printHelp("changeStyle | cs\t\t\t[changes between colored and non-colored mode]");
@@ -337,13 +383,21 @@ public class Main {
             printHelp("");
             printHelp("Use <command> -h | --help to get further information about the command and the parameters you can apply to it");
         } else if (x == 7) {
-            printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
+            if (style < 3) {
+                printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
+            } else {
+                printHelp("encodeDocument | ed\t\t\t[encodes a *.txt file at your file name]");
+            }
             printHelp("\t\t--file\t\t\t<name of the file to encode>");
             printHelp("\t\t--certFile\t\t<name of the certificate file (The name you entered for the writeCertificate command)>");
             printHelp("\t\t--certDirectory\t\t<directory of the certificate>");
             printHelp("\t\t--docDirectory\t\t<directory of the document>");
         } else if (x == 8) {
-            printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
+            if (style < 3) {
+                printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
+            } else {
+                printHelp("decodeDocument | dd\t\t\t[decodes a *.txt file at your file name]");
+            }
             printHelp("\t\t--file\t\t\t<name of the file to decode>");
             printHelp("\t\t--certFile\t\t<name of the certificate file (The name you entered for the writeCertificate command)>");
             printHelp("\t\t--docDirectory\t\t<directory of the document>");
@@ -353,6 +407,14 @@ public class Main {
             printHelp("\t\t--copyConfig\t\t[copies the default config file to your selected location]");
         } else if (x == 10) {
             printHelp("changeStyle | cs\t\t\t[changes between colored and non-colored mode]");
+            printHelp("\t\t--toggle\t\t[toggles between the different styles");
+            printHelp("\t\t--style\t\t\t<the style you want to select");
+            printHelp("\t\tavailable styles:");
+            printHelp("\t\t\tdefault | d");
+            printHelp("\t\t\tnon-colored | nc");
+            printHelp("\t\t\tone-colored | oc");
+            printHelp("\t\t\tone-lettered | ol");
+            printHelp("\t\t\tsimple | s");
         }
     }
 
@@ -601,6 +663,8 @@ public class Main {
         cs = false;
         certDirectory = null;
         docDirectory = null;
+        cStyle = null;
+        styleToggle = false;
     }
 
     /**
@@ -609,10 +673,14 @@ public class Main {
      * @param msg the message after the [INFO]
      */
     public void printInfo(String msg) {
-        if (colored)
-            System.out.println("[" + ANSI_BLUE + "INFO" + ANSI_RESET + "] " + msg);
-        else
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_OUTPUT + "INFO" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
             System.out.println("[INFO] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_OUTPUT + "I" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_OUTPUT + "+" + ANSI_RESET + "] " + msg);
     }
 
     /**
@@ -621,10 +689,14 @@ public class Main {
      * @param msg the message after the [ERROR]
      */
     public void printError(String msg) {
-        if (colored)
-            System.out.println("[" + ANSI_RED + "ERROR" + ANSI_RESET + "] " + msg);
-        else
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_ERROR + "ERROR" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
             System.out.println("[ERROR] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_ERROR + "E" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
     }
 
     /**
@@ -633,10 +705,14 @@ public class Main {
      * @param msg the message after the [HELP]
      */
     public void printHelp(String msg) {
-        if (colored)
-            System.out.println("[" + ANSI_GREEN + "HELP" + ANSI_RESET + "] " + msg);
-        else
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_HELP + "HELP" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
             System.out.println("[HELP] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_HELP + "H" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_HELP + "*" + ANSI_RESET + "] " + msg);
     }
 
     /**
@@ -645,8 +721,8 @@ public class Main {
      * @param msg the message after the [-]
      */
     public void printCertData(String msg) {
-        if (colored)
-            System.out.println("[" + ANSI_BLUE + "-" + ANSI_RESET + "] " + msg);
+        if (style != 1)
+            System.out.println("[" + ANSI_OUTPUT + "-" + ANSI_RESET + "] " + msg);
         else
             System.out.println("[-] " + msg);
     }
@@ -657,11 +733,10 @@ public class Main {
      * @param msg the message after the [-]
      */
     public void printRedCertData(String msg) {
-        if (colored)
-            System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
+        if (style != 1)
+            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
         else
             System.out.println("[-] " + msg);
-
     }
 
     /**
@@ -672,15 +747,15 @@ public class Main {
      * @param max the maximum Number of the list (important for the amount of " " in front of the number)
      */
     public void printDocumentData(String msg, int i, int max) {
-        if (colored) {
+        if (style != 1) {
             if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.println("[" + ANSI_BLUE + "   " + i + ANSI_RESET + "] " + msg);
+                System.out.println("[" + ANSI_OUTPUT + "   " + i + ANSI_RESET + "] " + msg);
             } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.println("[" + ANSI_BLUE + "  " + i + ANSI_RESET + "] " + msg);
+                System.out.println("[" + ANSI_OUTPUT + "  " + i + ANSI_RESET + "] " + msg);
             } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.println("[" + ANSI_BLUE + " " + i + ANSI_RESET + "] " + msg);
+                System.out.println("[" + ANSI_OUTPUT + " " + i + ANSI_RESET + "] " + msg);
             } else {
-                System.out.println("[" + ANSI_BLUE + i + ANSI_RESET + "] " + msg);
+                System.out.println("[" + ANSI_OUTPUT + i + ANSI_RESET + "] " + msg);
             }
         } else {
             if (max / 1000. > 1 && i / 10. < 1) {
@@ -701,10 +776,18 @@ public class Main {
      * @param msg the message in yellow after the [J-CONSOLE>
      */
     public void printEditor(String msg) {
-        if (colored)
-            System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
-        else
+        if (style == 0 || style == 2)
+            System.out.print("[" + ANSI_INPUT + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_INPUT + msg + ANSI_RESET + "> ");
+        else if (style == 1)
             System.out.print("[J-CONSOLE> " + msg + "> ");
+        else {
+            String[] msgList = msg.split("/");
+            if (msgList.length < 3) {
+                System.out.print("[" + ANSI_INPUT + msg + ANSI_RESET + "> ");
+            } else {
+                System.out.print("[" + ANSI_INPUT + ".../" + msgList[msgList.length - 1] + ANSI_RESET + "> ");
+            }
+        }
     }
 
     /**
@@ -714,15 +797,15 @@ public class Main {
      * @param max the maximum Number of the list (important for the amount of " " in front of the number)
      */
     public void printEditorInput(int i, int max) {
-        if (colored) {
+        if (style != 1) {
             if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.print("[" + ANSI_YELLOW + "   " + i + ANSI_RESET + "] ");
+                System.out.print("[" + ANSI_INPUT + "   " + i + ANSI_RESET + "] ");
             } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.print("[" + ANSI_YELLOW + "  " + i + ANSI_RESET + "] ");
+                System.out.print("[" + ANSI_INPUT + "  " + i + ANSI_RESET + "] ");
             } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.print("[" + ANSI_YELLOW + " " + i + ANSI_RESET + "] ");
+                System.out.print("[" + ANSI_INPUT + " " + i + ANSI_RESET + "] ");
             } else {
-                System.out.print("[" + ANSI_YELLOW + i + ANSI_RESET + "] ");
+                System.out.print("[" + ANSI_INPUT + i + ANSI_RESET + "] ");
             }
         } else {
             if (max / 1000. > 1 && i / 10. < 1) {
