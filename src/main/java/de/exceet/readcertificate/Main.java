@@ -10,6 +10,7 @@ import java.security.cert.CertificateEncodingException;
 import java.util.*;
 
 public class Main {
+    public boolean colored = true;
     public final String ANSI_RESET = "\u001B[0m";
     public final String ANSI_RED = "\u001B[91m";
     public final String ANSI_GREEN = "\u001B[92m";
@@ -36,6 +37,8 @@ public class Main {
     public boolean et;
     @Parameter(names = {"decodeDocument", "dd"}, description = "decodes a text file with a private key")
     public boolean dt;
+    @Parameter(names = {"changeStyle", "cs"}, description = "changes between colored and non-colored mode")
+    public boolean cs;
     //-------------------------------+
     @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
     public String iName;
@@ -169,6 +172,9 @@ public class Main {
                 printHelpToConsole(4);
                 main.cd = false;
             }
+            if (cs) {
+                printHelpToConsole(10);
+            }
             if (main.exit) {
                 printHelpToConsole(2);
                 main.exit = false;
@@ -271,6 +277,12 @@ public class Main {
                             main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
                         else
                             setConfigFile(directoryName + "/config.properties", copyConfig);
+                    } else if (cs) {
+                        if(colored = !colored){
+                            printInfo("Successfully switched to colored mode");
+                        }else{
+                            printInfo("Successfully switched to non-colored mode");
+                        }
                     }
                 }
             }
@@ -306,7 +318,7 @@ public class Main {
             printHelp("readDocument | rd\t\t[reads a *.txt file with your filename]");
             printHelp("\t\t--file\t\t\t<name of the file to read>");
         } else if (x == 4) {
-            printHelp("cd\t\t\t\t[gives you the option to select another directory]");
+            printHelp("changeDirectory | cd\t\t[gives you the option to select another directory]");
         } else if (x == 5) {
             printHelp("writeDocument | wd\t\t[writes a *.txt file to you filename]");
             printHelp("\t\t--file\t\t\t<name of the file to write>");
@@ -319,7 +331,8 @@ public class Main {
             printHelp("encodeDocument | ed\t\t[encodes a *.txt file at your file name]");
             printHelp("decodeDocument | dd\t\t[decodes a *.txt file at your file name]");
             printHelp("setConfig | sc \t\t\t[changes the position of the config file]");
-            printHelp("cd\t\t\t\t[gives you the option to select another directory]");
+            printHelp("changeDirectory | cd\t\t[gives you the option to select another directory]");
+            printHelp("changeStyle | cs\t\t\t[changes between colored and non-colored mode]");
             printHelp("exit\t\t\t\t[exits the console]");
             printHelp("");
             printHelp("Use <command> -h | --help to get further information about the command and the parameters you can apply to it");
@@ -335,9 +348,11 @@ public class Main {
             printHelp("\t\t--certFile\t\t<name of the certificate file (The name you entered for the writeCertificate command)>");
             printHelp("\t\t--docDirectory\t\t<directory of the document>");
         } else if (x == 9) {
-            printHelp("setConfig | sc \t\t\t[changes the position of the config file]");
+            printHelp("setConfig | sc\t\t\t[changes the position of the config file]");
             printHelp("\t\t--directory\t\t<name of the new directory of the config.properties file>");
             printHelp("\t\t--copyConfig\t\t[copies the default config file to your selected location]");
+        } else if (x == 10) {
+            printHelp("changeStyle | cs\t\t\t[changes between colored and non-colored mode]");
         }
     }
 
@@ -583,6 +598,7 @@ public class Main {
         lines = 0;
         copyConfig = false;
         certTargetDirectory = null;
+        cs = false;
         certDirectory = null;
         docDirectory = null;
     }
@@ -593,7 +609,10 @@ public class Main {
      * @param msg the message after the [INFO]
      */
     public void printInfo(String msg) {
-        System.out.println("[" + ANSI_BLUE + "INFO" + ANSI_RESET + "] " + msg);
+        if (colored)
+            System.out.println("[" + ANSI_BLUE + "INFO" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[INFO] " + msg);
     }
 
     /**
@@ -602,7 +621,10 @@ public class Main {
      * @param msg the message after the [ERROR]
      */
     public void printError(String msg) {
-        System.out.println("[" + ANSI_RED + "ERROR" + ANSI_RESET + "] " + msg);
+        if (colored)
+            System.out.println("[" + ANSI_RED + "ERROR" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[ERROR] " + msg);
     }
 
     /**
@@ -611,7 +633,10 @@ public class Main {
      * @param msg the message after the [HELP]
      */
     public void printHelp(String msg) {
-        System.out.println("[" + ANSI_GREEN + "HELP" + ANSI_RESET + "] " + msg);
+        if (colored)
+            System.out.println("[" + ANSI_GREEN + "HELP" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[HELP] " + msg);
     }
 
     /**
@@ -620,7 +645,10 @@ public class Main {
      * @param msg the message after the [-]
      */
     public void printCertData(String msg) {
-        System.out.println("[" + ANSI_BLUE + "-" + ANSI_RESET + "] " + msg);
+        if (colored)
+            System.out.println("[" + ANSI_BLUE + "-" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[-] " + msg);
     }
 
     /**
@@ -629,7 +657,11 @@ public class Main {
      * @param msg the message after the [-]
      */
     public void printRedCertData(String msg) {
-        System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
+        if (colored)
+            System.out.println("[" + ANSI_RED + "-" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[-] " + msg);
+
     }
 
     /**
@@ -640,14 +672,26 @@ public class Main {
      * @param max the maximum Number of the list (important for the amount of " " in front of the number)
      */
     public void printDocumentData(String msg, int i, int max) {
-        if (max / 1000. > 1 && i / 10. < 1) {
-            System.out.println("[" + ANSI_BLUE + "   " + i + ANSI_RESET + "] " + msg);
-        } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-            System.out.println("[" + ANSI_BLUE + "  " + i + ANSI_RESET + "] " + msg);
-        } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-            System.out.println("[" + ANSI_BLUE + " " + i + ANSI_RESET + "] " + msg);
+        if (colored) {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.println("[" + ANSI_BLUE + "   " + i + ANSI_RESET + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.println("[" + ANSI_BLUE + "  " + i + ANSI_RESET + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.println("[" + ANSI_BLUE + " " + i + ANSI_RESET + "] " + msg);
+            } else {
+                System.out.println("[" + ANSI_BLUE + i + ANSI_RESET + "] " + msg);
+            }
         } else {
-            System.out.println("[" + ANSI_BLUE + i + ANSI_RESET + "] " + msg);
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.println("[   " + i + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.println("[  " + i + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.println("[ " + i + "] " + msg);
+            } else {
+                System.out.println("[" + i + "] " + msg);
+            }
         }
     }
 
@@ -657,7 +701,10 @@ public class Main {
      * @param msg the message in yellow after the [J-CONSOLE>
      */
     public void printEditor(String msg) {
-        System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
+        if (colored)
+            System.out.print("[" + ANSI_YELLOW + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_YELLOW + msg + ANSI_RESET + "> ");
+        else
+            System.out.print("[J-CONSOLE> " + msg + "> ");
     }
 
     /**
@@ -667,14 +714,26 @@ public class Main {
      * @param max the maximum Number of the list (important for the amount of " " in front of the number)
      */
     public void printEditorInput(int i, int max) {
-        if (max / 1000. > 1 && i / 10. < 1) {
-            System.out.print("[" + ANSI_YELLOW + "   " + i + ANSI_RESET + "] ");
-        } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-            System.out.print("[" + ANSI_YELLOW + "  " + i + ANSI_RESET + "] ");
-        } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-            System.out.print("[" + ANSI_YELLOW + " " + i + ANSI_RESET + "] ");
+        if (colored) {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.print("[" + ANSI_YELLOW + "   " + i + ANSI_RESET + "] ");
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.print("[" + ANSI_YELLOW + "  " + i + ANSI_RESET + "] ");
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.print("[" + ANSI_YELLOW + " " + i + ANSI_RESET + "] ");
+            } else {
+                System.out.print("[" + ANSI_YELLOW + i + ANSI_RESET + "] ");
+            }
         } else {
-            System.out.print("[" + ANSI_YELLOW + i + ANSI_RESET + "] ");
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.print("[   " + i + "] ");
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.print("[  " + i + "] ");
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.print("[ " + i + "] ");
+            } else {
+                System.out.print("[" + i + "] ");
+            }
         }
     }
 
