@@ -2,17 +2,15 @@ package de.exceet.testreadcerfiticate;
 
 import de.exceet.readcertificate.EditCertificate;
 import de.exceet.readcertificate.Main;
+import de.exceet.readcertificate.TextEncodingDecoding;
 import org.junit.Test;
 
 import javax.security.cert.CertificateException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 public class TestReadCertificate {
@@ -22,13 +20,22 @@ public class TestReadCertificate {
     @Test
     public void test() {
         Main main = new Main();
-        EditCertificate rc = new EditCertificate();
+        EditCertificate ec = new EditCertificate();
+        TextEncodingDecoding tc = new TextEncodingDecoding();
 
-        testRead(main, rc, new ArrayList<>());
+        testRead(main, ec, new ArrayList<>());
 
-        testWrite(rc, new ArrayList<>());
+        testWrite(ec, new ArrayList<>());
 
         testReadProperties(main);
+
+        testStringToDate(main);
+
+        testDefaults(main);
+
+        testTestDate(main, ec);
+
+        testTextEncodingDecoding(main, tc);
     }
 
     /**
@@ -38,7 +45,7 @@ public class TestReadCertificate {
      * @param rc       EditCertificate class (needed to call read())
      * @param testRead new ArrayList<>() (for Testing)
      */
-    public void testRead(Main main, EditCertificate rc, List<String> testRead) {
+    private void testRead(Main main, EditCertificate rc, List<String> testRead) {
         //---- Test read() ----//
         main.printInfo("Testing read() function");
         try {
@@ -73,7 +80,7 @@ public class TestReadCertificate {
      * @param wc        EditCertificate class (needed to call write())
      * @param testWrite new ArrayList<>() (for Testing)
      */
-    public void testWrite(EditCertificate wc, List<String> testWrite) {
+    private void testWrite(EditCertificate wc, List<String> testWrite) {
         //---- Test write() ----//
         Main main = new Main();
         main.printInfo("Testing write() function");
@@ -92,8 +99,6 @@ public class TestReadCertificate {
             try {
                 wc.write("src/test/resources/testGeneratedCertificate", "", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
                 testWrite = wc.read("src/test/resources/testGeneratedCertificate");
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -116,13 +121,76 @@ public class TestReadCertificate {
      *
      * @param main Main class (needed to call
      */
-    public void testReadProperties(Main main) {
+    private void testReadProperties(Main main) {
         main.printInfo("Testing readProperties() function");
         try {
-            assert main.readProperties("conffiig.properties", false, true).isEmpty();
             assert !main.readProperties("config.properties", false, true).isEmpty();
         } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
         main.printInfo("Completed testing readProperties() function");
+    }
+
+    private void testDefaults(Main main) {
+        main.printInfo("Testing defaultString()");
+        assert main.defaultString(null, "Hey").equals("Hey");
+        assert main.defaultString("Hey", "something else").equals("Hey");
+
+        main.printInfo("Testing defaultInt()");
+        assert main.defaultInt(0, 50, 1) == 50;
+        assert main.defaultInt(50, 5, 1) == 50;
+
+        main.printInfo("Testing defaultLong())");
+        assert main.defaultLong(0, 5000000000L, 1) == 5000000000L;
+        assert main.defaultLong(5000000000L, 5, 1) == 5000000000L;
+
+        main.printInfo("Testing defaultDate()");
+        assert main.defaultDate("25-12-2012", new GregorianCalendar(2012, Calendar.DECEMBER, 2).getTime()).equals(new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime());
+        assert main.defaultDate(null, new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime()).equals(new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime());
+
+        main.printInfo("Successfully tested default functions");
+    }
+
+    private void testStringToDate(Main main) {
+        main.printInfo("Testing StringToDate()");
+        assert main.stringToDate("25-12-2012").equals(new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime());
+        assert main.stringToDate("25-01-2012").equals(new GregorianCalendar(2012, Calendar.JANUARY, 25).getTime());
+        main.printInfo("Successfully tested StringToDate()");
+    }
+
+    private void testTestDate(Main main, EditCertificate ec) {
+        main.printInfo("Testing testDate()");
+        long date = new Date().getTime();
+        assert ec.testDate(new Date(date - 1000L), new Date(date + 1000L));
+        assert !ec.testDate(new Date(date + 1000L), new Date(date + 10000L));
+        main.printInfo("Successfully tested testDate()");
+    }
+
+    private void testTextEncodingDecoding(Main main, TextEncodingDecoding tc) {
+        main.printInfo("Testing encode() and decode()");
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter("src/test/resources/testFile.txt"));
+            bw.write("A test message");
+            bw.close();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        try {
+            KeyPairGenerator kpg = null;
+            kpg = KeyPairGenerator.getInstance("RSA");
+            kpg.initialize(4096);
+            KeyPair keyPair = kpg.generateKeyPair();
+            tc.encode("src/test/resources/testFile.txt", keyPair.getPublic(), true, false);
+            tc.decode("src/test/resources/testFile.txt", keyPair.getPrivate(), false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("src/test/resources/testFile.txt"));
+            assert br.readLine().equals("A test message");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        main.printInfo("Successfully tested encode() and decode()");
     }
 }

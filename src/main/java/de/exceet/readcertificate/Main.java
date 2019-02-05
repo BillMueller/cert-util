@@ -349,7 +349,7 @@ public class Main {
      * @return if in != null -> in <br>
      * If in == null -> d
      */
-    private String defaultString(String in, String d) {
+    public String defaultString(String in, String d) {
         if (in == null) {
             in = d;
         }
@@ -365,7 +365,7 @@ public class Main {
      * @return if in > val -> in<br>
      * If in <= val -> d
      */
-    private int defaultInt(int in, int d, int val) {
+    public int defaultInt(int in, int d, int val) {
         if (in < val) {
             in = d;
         }
@@ -381,7 +381,7 @@ public class Main {
      * @return if in > val -> in<br>
      * If in <= val -> d
      */
-    private long defaultLong(long in, long d, int val) {
+    public long defaultLong(long in, long d, int val) {
         if (in < val) {
             in = d;
         }
@@ -396,7 +396,7 @@ public class Main {
      * @return if in != null -> in <br>
      * If in == null -> d
      */
-    private Date defaultDate(String in, Date d) {
+    public Date defaultDate(String in, Date d) {
         Date out;
         if (in == null) {
             out = d;
@@ -414,7 +414,7 @@ public class Main {
      * @param i string in DD-MM-YYYY format
      * @return date in Date format as output
      */
-    private Date stringToDate(String i) {
+    public Date stringToDate(String i) {
         int d = 0, y = 0, m = 0;
         try {
             String[] sa = i.split("");
