@@ -2,6 +2,8 @@
 
 *Comand line tool for genrating and reading certificates and .txt files and en-/decoding .txt files with help of the generated certificate.*
 
+_**Important:** you get the jar by running mvn clean install in the cmd while you are in the folder where you extracted the compressed download. The jar file is in the targed folder that's getting created_
+
 ###How to get it running?
 1. Create a working directory on your PC where you want the tool to work
 2. Open your cmd and switch with cd to the directory where the jar file is
