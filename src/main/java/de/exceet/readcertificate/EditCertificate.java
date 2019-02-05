@@ -33,8 +33,7 @@ public class EditCertificate {
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
      * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(String file, String pKfile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
-        Main main = new Main();
+    public void write(String file, String pKfile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test, Main main) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
         main.printInfo("starting certificate generator");
 
         // define serial number, certificate generator and the issuer/subjectdn
@@ -84,8 +83,7 @@ public class EditCertificate {
      * @throws IOException                              Needed if some of the inputs are wrong
      * @throws javax.security.cert.CertificateException Needed if some of the inputs are wrong
      */
-    public List<String> read(String file) throws IOException, javax.security.cert.CertificateException {
-        Main main = new Main();
+    public List<String> read(String file, Main main) throws IOException, javax.security.cert.CertificateException {
         main.printInfo("starting certificate reader");
         // define input stream to read the file
         InputStream inStream = new FileInputStream(file + ".crt");
@@ -160,8 +158,7 @@ public class EditCertificate {
      *
      * @param input the list to be printed out
      */
-    public void printCertDataToConsole(List<String> input) {
-        Main main = new Main();
+    public void printCertDataToConsole(List<String> input, Main main) {
         main.printInfo(input.get(0));
         main.printCertData(input.get(1));
         main.printCertData(input.get(2));

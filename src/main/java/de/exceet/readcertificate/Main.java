@@ -300,14 +300,14 @@ public class Main {
                             if (fileName == null || certFileName == null)
                                 main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
                             else
-                                tc.main(certDirectory, fileName, certFileName, docDirectory, 0);
+                                tc.main(certDirectory, fileName, certFileName, docDirectory, 0, main);
 
                         } else if (dt) {
                             docDirectory = defaultString(docDirectory, main.pFile);
                             if (fileName == null || certFileName == null)
                                 main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
                             else
-                                tc.main(main.pFile, fileName, certFileName, docDirectory, 1);
+                                tc.main(main.pFile, fileName, certFileName, docDirectory, 1, main);
                         } else if (setConfig) {
                             if (directoryName == null)
                                 main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
@@ -543,7 +543,7 @@ public class Main {
         String pathFile = defaultString(certTargetDirectory, main.pFile);
 
         try {
-            rc.write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false);
+            rc.write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false, main);
         } catch (CertificateEncodingException e) {
             printError("Couldn't encode the certificate");
         } catch (SignatureException e) {
@@ -558,7 +558,7 @@ public class Main {
 
         if (bRead) {
             try {
-                rc.printCertDataToConsole(rc.read(pathFile + "/" + fileName));
+                rc.printCertDataToConsole(rc.read(pathFile + "/" + fileName, main), main);
             } catch (IOException e) {
                 printError("[ERROR] Couldn't find the certificate to read");
             } catch (CertificateException e) {
@@ -576,7 +576,7 @@ public class Main {
      */
     private void startReader(EditCertificate rc, Main main) {
         try {
-            rc.printCertDataToConsole(rc.read(main.pFile + "/" + fileName));
+            rc.printCertDataToConsole(rc.read(main.pFile + "/" + fileName, main), main);
         } catch (IOException e) {
             printError("Couldn't find the certificate to read");
         } catch (CertificateException e) {

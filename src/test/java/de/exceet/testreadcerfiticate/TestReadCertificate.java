@@ -49,7 +49,7 @@ public class TestReadCertificate {
         //---- Test read() ----//
         main.printInfo("Testing read() function");
         try {
-            testRead = rc.read("src/test/resources/testCertificate");
+            testRead = rc.read("src/test/resources/testCertificate", main);
         } catch (IOException ioe) {
             main.printError("IOException");
             ioe.printStackTrace();
@@ -97,8 +97,8 @@ public class TestReadCertificate {
             keyGen.initialize(512);
             keyPair = keyGen.generateKeyPair();
             try {
-                wc.write("src/test/resources/testGeneratedCertificate", "", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true);
-                testWrite = wc.read("src/test/resources/testGeneratedCertificate");
+                wc.write("src/test/resources/testGeneratedCertificate", "", iName, sName, keyPair, serNumber, now, eDate, "SHA256withRSA", true, main);
+                testWrite = wc.read("src/test/resources/testGeneratedCertificate", main);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -140,7 +140,7 @@ public class TestReadCertificate {
         assert main.defaultInt(0, 50, 1) == 50;
         assert main.defaultInt(50, 5, 1) == 50;
 
-        main.printInfo("Testing defaultLong())");
+        main.printInfo("Testing defaultLong()");
         assert main.defaultLong(0, 5000000000L, 1) == 5000000000L;
         assert main.defaultLong(5000000000L, 5, 1) == 5000000000L;
 
@@ -180,8 +180,8 @@ public class TestReadCertificate {
             kpg = KeyPairGenerator.getInstance("RSA");
             kpg.initialize(4096);
             KeyPair keyPair = kpg.generateKeyPair();
-            tc.encode("src/test/resources/testFile.txt", keyPair.getPublic(), true, false);
-            tc.decode("src/test/resources/testFile.txt", keyPair.getPrivate(), false);
+            tc.encode("src/test/resources/testFile.txt", keyPair.getPublic(), true, false, main);
+            tc.decode("src/test/resources/testFile.txt", keyPair.getPrivate(), false, main);
         } catch (Exception e) {
             e.printStackTrace();
         }

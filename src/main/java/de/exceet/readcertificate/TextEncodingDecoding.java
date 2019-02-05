@@ -20,14 +20,13 @@ public class TextEncodingDecoding {
      * @param certName the name of the certificate used to en- or decode
      * @param mode     the mode (0 = encoding, 1 = decoding)
      */
-    public void main(String pFile, String fileName, String certName, String docDirect, int mode) {
-        Main main = new Main();
+    public void main(String pFile, String fileName, String certName, String docDirect, int mode, Main main) {
         TextEncodingDecoding tc = new TextEncodingDecoding();
         try {
             if (mode == 0)
-                tc.encode(docDirect + "/" + fileName + ".txt", tc.getPublicKey(pFile + "/" + certName + ".crt"), getValidity(pFile + "/" + certName + ".crt"), false);
+                tc.encode(docDirect + "/" + fileName + ".txt", tc.getPublicKey(pFile + "/" + certName + ".crt", main), getValidity(pFile + "/" + certName + ".crt", main), false, main);
             else
-                tc.decode(docDirect + "/" + fileName + ".txt", tc.getPrivateKey(pFile + "/" + certName + "_private_key"), false);
+                tc.decode(docDirect + "/" + fileName + ".txt", tc.getPrivateKey(pFile + "/" + certName + "_private_key", main), false, main);
         } catch (IOException e) {
             main.printError("file couldn't be found");
         } catch (CertificateException e) {
@@ -47,8 +46,7 @@ public class TextEncodingDecoding {
      * @param validity if the certificate the public key was taken from is valid
      * @throws IOException is thrown if the .txt file couldn't be found
      */
-    public void encode(String file, PublicKey pubKey, boolean validity, boolean certificate) throws IOException {
-        Main main = new Main();
+    public void encode(String file, PublicKey pubKey, boolean validity, boolean certificate, Main main) throws IOException {
         if (!validity)
             main.printError("The certificate isn't valid. Please contact the owner of the certificate to get a new one");
         else {
@@ -56,14 +54,14 @@ public class TextEncodingDecoding {
                 if (certificate) {
                     byte[] verified;
                     try (FileInputStream fis = new FileInputStream(file)) {
-                        verified = decryptCert(pubKey, IOUtils.toByteArray(fis));
+                        verified = decryptCert(pubKey, IOUtils.toByteArray(fis), main);
                         String out = new String(verified, "UTF-8");
-                        write(file, out);
+                        write(file, out, main);
                     }
                 } else {
-                    String in = read(file);
+                    String in = read(file, main);
                     if (in != null) {
-                        byte[] signed = encrypt(pubKey, in);
+                        byte[] signed = encrypt(pubKey, in, main);
                         try (FileOutputStream fos = new FileOutputStream(file)) {
                             fos.write(signed);
                         }
@@ -93,14 +91,13 @@ public class TextEncodingDecoding {
      * @param priKey the private key needed ti decode a message
      * @throws IOException is thrown if the .txt file couldn't be found
      */
-    public void decode(String file, PrivateKey priKey, boolean certificate) throws IOException {
-        Main main = new Main();
+    public void decode(String file, PrivateKey priKey, boolean certificate, Main main) throws IOException {
         String out = null;
         try {
             if (certificate) {
-                String in = read(file);
+                String in = read(file, main);
                 if (in != null) {
-                    byte[] signed = encryptCert(priKey, in);
+                    byte[] signed = encryptCert(priKey, in, main);
                     try (FileOutputStream fos = new FileOutputStream(file)) {
                         fos.write(signed);
                     }
@@ -108,7 +105,7 @@ public class TextEncodingDecoding {
             } else {
                 byte[] verified;
                 try (FileInputStream fis = new FileInputStream(file)) {
-                    verified = decrypt(priKey, IOUtils.toByteArray(fis));
+                    verified = decrypt(priKey, IOUtils.toByteArray(fis), main);
                     out = new String(verified, "UTF-8");
                 }
             }
@@ -124,7 +121,7 @@ public class TextEncodingDecoding {
         } catch (UnsupportedEncodingException e) {
             main.printError("UTF-8 isn't supported");
         }
-        write(file, out);
+        write(file, out, main);
     }
 
     /**
@@ -139,8 +136,7 @@ public class TextEncodingDecoding {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public byte[] encrypt(PublicKey publicKey, String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Main main = new Main();
+    public byte[] encrypt(PublicKey publicKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("encrypting Text");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
@@ -160,8 +156,7 @@ public class TextEncodingDecoding {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public byte[] decrypt(PrivateKey privateKey, byte[] encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Main main = new Main();
+    public byte[] decrypt(PrivateKey privateKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("decrypting Text");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
@@ -181,8 +176,7 @@ public class TextEncodingDecoding {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public byte[] encryptCert(PrivateKey privateKey, String message) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Main main = new Main();
+    public byte[] encryptCert(PrivateKey privateKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("encrypting certificate");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
@@ -202,8 +196,7 @@ public class TextEncodingDecoding {
      * @throws IllegalBlockSizeException
      * @throws BadPaddingException
      */
-    public byte[] decryptCert(PublicKey publicKey, byte[] encrypted) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Main main = new Main();
+    public byte[] decryptCert(PublicKey publicKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("decrypting certificate");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
@@ -217,8 +210,7 @@ public class TextEncodingDecoding {
      * @param f   file name of the .txt file
      * @param msg msg to be written
      */
-    public void write(String f, String msg) {
-        Main main = new Main();
+    public void write(String f, String msg, Main main) {
         try {
             if (f == null) {
                 main.printError("you have to enter a file name with parameter --file <filename>");
@@ -251,8 +243,7 @@ public class TextEncodingDecoding {
      * @param f file name of the .txt file
      * @return msg that has been read
      */
-    public String read(String f) {
-        Main main = new Main();
+    public String read(String f, Main main) {
         String out = "";
         try {
             int c = 0;
@@ -289,8 +280,7 @@ public class TextEncodingDecoding {
      * @throws IOException
      * @throws InvalidKeySpecException
      */
-    public PrivateKey getPrivateKey(String file) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
-        Main main = new Main();
+    public PrivateKey getPrivateKey(String file, Main main) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         main.printInfo("getting private key");
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return kf.generatePrivate(new PKCS8EncodedKeySpec(FileUtils.readFileToByteArray(new File(file))));
@@ -304,8 +294,7 @@ public class TextEncodingDecoding {
      * @throws CertificateException
      * @throws IOException
      */
-    public PublicKey getPublicKey(String file) throws CertificateException, IOException {
-        Main main = new Main();
+    public PublicKey getPublicKey(String file, Main main) throws CertificateException, IOException {
         main.printInfo("getting public key");
         InputStream inStream = new FileInputStream(file);
         javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
@@ -322,8 +311,7 @@ public class TextEncodingDecoding {
      * @throws CertificateException
      * @throws IOException
      */
-    public boolean getValidity(String file) throws CertificateException, IOException {
-        Main main = new Main();
+    public boolean getValidity(String file, Main main) throws CertificateException, IOException {
         EditCertificate ec = new EditCertificate();
         main.printInfo("checking validity");
         InputStream inStream = new FileInputStream(file);
