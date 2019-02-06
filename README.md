@@ -1,4 +1,4 @@
-**Cert-util command line tool**
+[](url)**Cert-util command line tool**
 
 *Comand line tool for genrating and reading certificates and .txt files and en-/decoding .txt files with help of the generated certificate.*
 
@@ -78,4 +78,4 @@ exit [exits the console]
 
 **5 Links to older versions**
 
-[An older version without the Console](../tree/withoutConsole)
+[An older version without the Console](.../tree/withoutConsole)
