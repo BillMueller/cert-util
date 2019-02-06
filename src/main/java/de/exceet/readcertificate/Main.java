@@ -250,6 +250,7 @@ public class Main {
                         String dPropsExDate = dProps.getProperty("defaultExDate", "default");
                         String dPropsValidity = dProps.getProperty("defaultValidity", "default");
                         String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+                        int dLineNumber = Integer.valueOf(dProps.getProperty("defaultLineNumber", "10"));
                         Date dStDate, dExDate = new Date();
                         long milSecValid = 31536000000L, dSerNumber;
 
@@ -280,8 +281,7 @@ public class Main {
                             if (fileName == null)
                                 main.printError("you have to enter a file name with the argument --file <filename>");
                             else {
-                                lines = main.defaultInt(lines, 10, 1);
-                                fileName = main.defaultString(fileName, "auto_generated_file.txt");
+                                lines = lines > 1 ? lines : dLineNumber;
                                 ed.write(fileName, main.pFile, main, lines);
                             }
                         } else if (writeC) {
@@ -295,15 +295,15 @@ public class Main {
                             else
                                 startReader(ec, main);
                         } else if (et) {
-                            certDirectory = defaultString(certDirectory, main.pFile);
-                            docDirectory = defaultString(docDirectory, main.pFile);
+                            certDirectory = certDirectory != null ? certDirectory : main.pFile;
+                            docDirectory = docDirectory != null ? docDirectory : main.pFile;
                             if (fileName == null || certFileName == null)
                                 main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
                             else
                                 tc.main(certDirectory, fileName, certFileName, docDirectory, 0, main);
 
                         } else if (dt) {
-                            docDirectory = defaultString(docDirectory, main.pFile);
+                            docDirectory = docDirectory != null ? docDirectory : main.pFile;
                             if (fileName == null || certFileName == null)
                                 main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
                             else
@@ -419,71 +419,6 @@ public class Main {
     }
 
     /**
-     * Tests if the String in is set.
-     *
-     * @param in the input String
-     * @param d  the default value for the input String
-     * @return if in != null -> in <br>
-     * If in == null -> d
-     */
-    public String defaultString(String in, String d) {
-        if (in == null) {
-            in = d;
-        }
-        return in;
-    }
-
-    /**
-     * Tests if the int in is bigger than the int val.
-     *
-     * @param in  the input String
-     * @param d   the default value for the input String
-     * @param val the test value
-     * @return if in > val -> in<br>
-     * If in <= val -> d
-     */
-    public int defaultInt(int in, int d, int val) {
-        if (in < val) {
-            in = d;
-        }
-        return in;
-    }
-
-    /**
-     * Tests if the int in is bigger than the int val.
-     *
-     * @param in  the input String
-     * @param d   the default value for the input String
-     * @param val the test value
-     * @return if in > val -> in<br>
-     * If in <= val -> d
-     */
-    public long defaultLong(long in, long d, int val) {
-        if (in < val) {
-            in = d;
-        }
-        return in;
-    }
-
-    /**
-     * Tests if the String in is set.
-     *
-     * @param in the input String
-     * @param d  the default value for the input String
-     * @return if in != null -> in <br>
-     * If in == null -> d
-     */
-    public Date defaultDate(String in, Date d) {
-        Date out;
-        if (in == null) {
-            out = d;
-        } else {
-            out = stringToDate(in);
-        }
-        return out;
-    }
-
-    /**
      * The function stringToDate() converts a String (i) into a date value. Important for that is, that the String got
      * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
      * return the date in "Date" format.
@@ -514,20 +449,20 @@ public class Main {
      * @param rc         editCertificate class object that's needed to start the Certificate generator in the that Class
      * @param dStDate    default start date the Certificate generator should use if it isn't set
      * @param dExDate    default expiry date the Certificate generator should use if it isn't set
-     * @param dKeys      default key size the Certificate generator should use if it isn't set
+     * @param dKeyS      default key size the Certificate generator should use if it isn't set
      * @param dSerNumber default serial number the Certificate generator should use if it isn't set
      * @param dSignAlg   default signature algorithm the Certificate generator should use if it isn't set
      * @param main       main class object
      */
-    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dSignAlg, Main main) {
+    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeyS, long dSerNumber, String dSignAlg, Main main) {
         printInfo("checking inputs");
-        iName = defaultString(iName, dIssuerName);
-        sName = defaultString(sName, dSubjectName);
-        Date stDate = defaultDate(sDate, dStDate);
-        Date exDate = defaultDate(eDate, dExDate);
-        keys = defaultInt(keys, dKeys, 512);
-        serNumber = defaultLong(serNumber, dSerNumber, 1);
-        signAlg = defaultString(signAlg, dSignAlg);
+        iName = iName != null ? iName : dIssuerName;
+        sName = sName != null ? sName : dSubjectName;
+        Date stDate = sDate != null ? stringToDate(sDate) : dStDate;
+        Date exDate = eDate != null ? stringToDate(eDate) : dExDate;
+        keys = keys > 512 ? keys : dKeyS;
+        serNumber = serNumber > 1 ? serNumber : dSerNumber;
+        signAlg = signAlg != null ? signAlg : dSignAlg;
 
         printInfo("generating key pair");
 
@@ -540,7 +475,7 @@ public class Main {
         keyGen.initialize(keys);
         KeyPair keypair = keyGen.generateKeyPair();
 
-        String pathFile = defaultString(certTargetDirectory, main.pFile);
+        String pathFile = certTargetDirectory != null ? certTargetDirectory :  main.pFile;
 
         try {
             rc.write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false, main);

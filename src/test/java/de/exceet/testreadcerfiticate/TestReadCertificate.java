@@ -31,8 +31,6 @@ public class TestReadCertificate {
 
         testStringToDate(main);
 
-        testDefaults(main);
-
         testTestDate(main, ec);
 
         testTextEncodingDecoding(main, tc);
@@ -129,26 +127,6 @@ public class TestReadCertificate {
             ioe.printStackTrace();
         }
         main.printInfo("Completed testing readProperties() function");
-    }
-
-    private void testDefaults(Main main) {
-        main.printInfo("Testing defaultString()");
-        assert main.defaultString(null, "Hey").equals("Hey");
-        assert main.defaultString("Hey", "something else").equals("Hey");
-
-        main.printInfo("Testing defaultInt()");
-        assert main.defaultInt(0, 50, 1) == 50;
-        assert main.defaultInt(50, 5, 1) == 50;
-
-        main.printInfo("Testing defaultLong()");
-        assert main.defaultLong(0, 5000000000L, 1) == 5000000000L;
-        assert main.defaultLong(5000000000L, 5, 1) == 5000000000L;
-
-        main.printInfo("Testing defaultDate()");
-        assert main.defaultDate("25-12-2012", new GregorianCalendar(2012, Calendar.DECEMBER, 2).getTime()).equals(new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime());
-        assert main.defaultDate(null, new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime()).equals(new GregorianCalendar(2012, Calendar.DECEMBER, 25).getTime());
-
-        main.printInfo("Successfully tested default functions");
     }
 
     private void testStringToDate(Main main) {
