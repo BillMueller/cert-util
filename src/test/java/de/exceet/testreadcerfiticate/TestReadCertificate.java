@@ -114,19 +114,19 @@ public class TestReadCertificate {
     }
 
     /**
-     * Tests the readProperties() function by taking a wrong and a correct config.properties file and testing if the results will
+     * Tests the getPropertiesFile() function by taking a wrong and a correct config.properties file and testing if the results will
      * are correct
      *
      * @param main Main class (needed to call
      */
     private void testReadProperties(Main main) {
-        main.printInfo("Testing readProperties() function");
+        main.printInfo("Testing getPropertiesFile() function");
         try {
-            assert !main.readProperties("config.properties", false, true).isEmpty();
+            assert !main.getPropertiesFile("config.properties", false, true).isEmpty();
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-        main.printInfo("Completed testing readProperties() function");
+        main.printInfo("Completed testing getPropertiesFile() function");
     }
 
     private void testStringToDate(Main main) {

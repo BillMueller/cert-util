@@ -128,7 +128,7 @@ public class Main {
                 try {
                     jc = JCommander.newBuilder().addObject(main).build();
                     jc.parse(sin);
-                    main.run(main, main.pFile, ed);
+                    main.run(main);
                 } catch (com.beust.jcommander.ParameterException pe) {
                     main.printError("unknown command or parameters");
                     main.exit = false;
@@ -139,14 +139,7 @@ public class Main {
         printInfo("exiting...");
     }
 
-    /**
-     * Function to use the inputs from JCommander and call the needed functions with the given parameters <br>
-     *
-     * @param main Main class object (object where the cd and exit variable is saved
-     * @param pF   directory path where the user with the editor is right now
-     * @param ed   EditDocument class object (needed to call the write() and read() function for document editing)
-     */
-    private void run(Main main, String pF, EditDocument ed) {
+    private void run(Main main) {
         if (gHelp || help) {
             if (gHelp) {
                 printHelpToConsole(6);
@@ -187,137 +180,485 @@ public class Main {
             if (!main.exit) {
                 if (cd) {
                     main.cd = true;
+                } else if (cs) {
+                    callChangeStyle();
                 } else {
-                    if (cs) {
-                        if (cStyle == null) {
-                            cStyle = "somestring";
-                            if (!styleToggle) {
-                                style = 0;
-                            }
-                        }
-                        if (cStyle.equals("default") || cStyle.equals("d")) {
-                            style = 0;
-                        } else if (cStyle.equals("non-colored") || cStyle.equals("nc")) {
-                            style = 1;
-                        } else if (cStyle.equals("one-colored") || cStyle.equals("oc")) {
-                            style = 2;
-                        } else if (cStyle.equals("one-lettered") || cStyle.equals("ol")) {
-                            style = 3;
-                        } else if (cStyle.equals("simple") || cStyle.equals("s")) {
-                            style = 4;
-                        } else if (styleToggle) {
-                            style = (style + 1) % 5;
-                        } else if (!cStyle.equals("somestring")) {
-                            printError("the style " + cStyle + " doesn't exist");
-                        }
-                        if (style == 2) {
-                            ANSI_ERROR = ANSI_INPUT;
-                            ANSI_HELP = ANSI_INPUT;
-                            ANSI_OUTPUT = ANSI_INPUT;
-                        } else {
-                            ANSI_ERROR = "\u001B[91m";
-                            ANSI_HELP = "\u001B[92m";
-                            ANSI_OUTPUT = "\u001B[94m";
-                        }
-                    } else {
-                        String defaultConfigFileName = "config.properties";
-                        EditCertificate ec = new EditCertificate();
-                        TextEncodingDecoding tc = new TextEncodingDecoding();
-                        Properties dProps = new Properties();
+                    String defaultConfigFileName = "config.properties";
+                    Properties dProps = callGetPropertiesFile(defaultConfigFileName);
 
-                        if (!configFile.equals("default")) {
-                            try {
-                                dProps = readProperties(configFile, true, false);
-                            } catch (IOException ioe) {
-                                printError("no file could be found at " + defaultConfigFileName);
-                                printInfo("the name of the config file must be config.properties");
-                                printInfo("using default config.properties file");
-                            }
-                        } else {
-                            try {
-                                dProps = readProperties(defaultConfigFileName, true, true);
-                            } catch (Exception e) {
-                                printError("default config file couldn't be found");
-                                printInfo("using default configs");
-                            }
-                        }
+                    String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
+                    String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
+                    int dKeys = Integer.parseInt(dProps.getProperty("defaultHeySize", "4096"));
+                    String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
+                    String dPropsStDate = dProps.getProperty("defaultStDate", "default");
+                    String dPropsExDate = dProps.getProperty("defaultExDate", "default");
+                    String dPropsValidity = dProps.getProperty("defaultValidity", "default");
+                    String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
+                    int dLineNumber = Integer.parseInt(dProps.getProperty("defaultLineNumber", "10"));
+                    long milSecValid = 31536000000L, dSerNumber;
 
-                        String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-                        String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-                        int dKeys = Integer.valueOf(dProps.getProperty("defaultHeySize", "4096"));
-                        String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-                        String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-                        String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-                        String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-                        String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-                        int dLineNumber = Integer.valueOf(dProps.getProperty("defaultLineNumber", "10"));
-                        Date dStDate, dExDate = new Date();
-                        long milSecValid = 31536000000L, dSerNumber;
+                    if (!dPropsValidity.equals("default"))
+                        milSecValid = Long.valueOf(dPropsValidity);
 
-                        if (dPropsStDate.equals("default"))
-                            dStDate = new Date();
-                        else
-                            dStDate = stringToDate(dPropsStDate);
+                    if (dPropsSerNumber.equals("default"))
+                        dSerNumber = new Date().getTime();
+                    else
+                        dSerNumber = Long.valueOf(dPropsSerNumber);
 
-                        if (!dPropsValidity.equals("default"))
-                            milSecValid = Long.valueOf(dPropsValidity);
+                    Date dStDate = setDefaultPropertiesDates(dPropsStDate, 0);
+                    Date dExDate = setDefaultPropertiesDates(dPropsExDate, milSecValid);
 
-                        if (dPropsExDate.equals("default"))
-                            dExDate.setTime(dStDate.getTime() + milSecValid);
-                        else
-                            dExDate = stringToDate(dPropsExDate);
+                    if (readD)
+                        callReadDocument(main);
+                    else if (writeD)
+                        callWriteDocument(main, dLineNumber);
+                    else if (writeC)
+                        callWriteCertificate(main, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
+                    else if (readC)
+                        callReadCertificate(main);
+                    else if (et)
+                        callEncodeDocument(main);
+                    else if (dt)
+                        callDecodeDocument(main);
+                    else if (setConfig)
+                        callSetConfig();
+                }
 
-                        if (dPropsSerNumber.equals("default"))
-                            dSerNumber = new Date().getTime();
-                        else
-                            dSerNumber = Long.valueOf(dPropsSerNumber);
+            }
+        }
+    }
 
-                        if (readD) {
-                            if (fileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename>");
-                            else
-                                ed.read(fileName, pF, main);
-                        } else if (writeD) {
-                            if (fileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename>");
-                            else {
-                                lines = lines > 1 ? lines : dLineNumber;
-                                ed.write(fileName, main.pFile, main, lines);
-                            }
-                        } else if (writeC) {
-                            if (fileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename>");
-                            else
-                                startWriter(ec, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg, main);
-                        } else if (readC) {
-                            if (fileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename>");
-                            else
-                                startReader(ec, main);
-                        } else if (et) {
-                            certDirectory = certDirectory != null ? certDirectory : main.pFile;
-                            docDirectory = docDirectory != null ? docDirectory : main.pFile;
-                            if (fileName == null || certFileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
-                            else
-                                tc.main(certDirectory, fileName, certFileName, docDirectory, 0, main);
+    /**
+     * Reads the config.properties file in the main project folder or a custom config.properties file given with the
+     * --config parameter
+     *
+     * @param configFileName name of the config file (with directory unless its the the config.properties file in hte resources folder.
+     * @param printMsg       should be true unless it gets called in the test run
+     * @param defaultPath    if the name is just config.properties -> true <br>
+     *                       if the name is with directory (for example C:/.../config.properties -> false
+     * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
+     */
+    public Properties getPropertiesFile(String configFileName, boolean printMsg, boolean defaultPath) throws IOException {
+        if (printMsg)
+            if (defaultPath)
+                printInfo("loading config.properties");
+            else
+                printInfo("loading " + configFileName);
+        Properties prop = new Properties();
 
-                        } else if (dt) {
-                            docDirectory = docDirectory != null ? docDirectory : main.pFile;
-                            if (fileName == null || certFileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
-                            else
-                                tc.main(main.pFile, fileName, certFileName, docDirectory, 1, main);
-                        } else if (setConfig) {
-                            if (directoryName == null)
-                                main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
-                            else
-                                setAndCopyConfig(directoryName + "/config.properties", copyConfig);
-                        }
-                    }
+        if (defaultPath) {
+            try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName)) {
+                if (input != null)
+                    prop.load(input);
+                else
+                    throw new IOException();
+                if (printMsg)
+                    printInfo("successfully loaded settings from " + configFileName);
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        } else {
+            try (InputStream input = new FileInputStream(configFileName)) {
+                if (input != null)
+                    prop.load(input);
+                else
+                    throw new IOException();
+
+                printInfo("successfully loaded settings from " + configFileName);
+
+            } catch (IOException ex) {
+                if (printMsg) {
+                    throw new IOException("");
                 }
             }
         }
+        return prop;
+    }
+
+    /**
+     * Resets all the Mains global variables needed for JCommander
+     */
+    private void setToDefault() {
+        writeC = false;
+        readC = false;
+        readD = false;
+        cd = false;
+        writeD = false;
+        gHelp = false;
+        et = false;
+        dt = false;
+        setConfig = false;
+        //-------+
+        iName = null;
+        sName = null;
+        sDate = null;
+        eDate = null;
+        keys = 0;
+        serNumber = 0L;
+        fileName = null;
+        signAlg = null;
+        bRead = false;
+        help = false;
+        certFileName = null;
+        lines = 0;
+        copyConfig = false;
+        certTargetDirectory = null;
+        cs = false;
+        certDirectory = null;
+        docDirectory = null;
+        cStyle = null;
+        styleToggle = false;
+    }
+
+    //-----------+
+
+    /**
+     * Prints the message with a blue [INFO] in front of it
+     *
+     * @param msg the message after the [INFO]
+     */
+    public void printInfo(String msg) {
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_OUTPUT + "INFO" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
+            System.out.println("[INFO] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_OUTPUT + "I" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_OUTPUT + "+" + ANSI_RESET + "] " + msg);
+    }
+
+    /**
+     * Prints the message with a red [ERROR] in front of it
+     *
+     * @param msg the message after the [ERROR]
+     */
+    public void printError(String msg) {
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_ERROR + "ERROR" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
+            System.out.println("[ERROR] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_ERROR + "E" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
+    }
+
+    /**
+     * Prints the message with a green [HELP] in front of it
+     *
+     * @param msg the message after the [HELP]
+     */
+    private void printHelp(String msg) {
+        if (style == 0 || style == 2)
+            System.out.println("[" + ANSI_HELP + "HELP" + ANSI_RESET + "] " + msg);
+        else if (style == 1)
+            System.out.println("[HELP] " + msg);
+        else if (style == 3)
+            System.out.println("[" + ANSI_HELP + "H" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[" + ANSI_HELP + "*" + ANSI_RESET + "] " + msg);
+    }
+
+    /**
+     * Prints the message with a blue [-] in front of it
+     *
+     * @param msg the message after the [-]
+     */
+    public void printCertData(String msg) {
+        if (style != 1)
+            System.out.println("[" + ANSI_OUTPUT + "-" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[-] " + msg);
+    }
+
+    /**
+     * Prints the message with a red [-] in front of it
+     *
+     * @param msg the message after the [-]
+     */
+    public void printRedCertData(String msg) {
+        if (style != 1)
+            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
+        else
+            System.out.println("[-] " + msg);
+    }
+
+    /**
+     * Prints the message with a blue [number of the lines] in front of it for example [25]
+     *
+     * @param msg the message after the [number of the lines]
+     * @param i   the number inside the []
+     * @param max the maximum Number of the list (important for the amount of " " in front of the number)
+     */
+    public void printDocumentData(String msg, int i, int max) {
+        if (style != 1) {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.println("[" + ANSI_OUTPUT + "   " + i + ANSI_RESET + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.println("[" + ANSI_OUTPUT + "  " + i + ANSI_RESET + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.println("[" + ANSI_OUTPUT + " " + i + ANSI_RESET + "] " + msg);
+            } else {
+                System.out.println("[" + ANSI_OUTPUT + i + ANSI_RESET + "] " + msg);
+            }
+        } else {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.println("[   " + i + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.println("[  " + i + "] " + msg);
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.println("[ " + i + "] " + msg);
+            } else {
+                System.out.println("[" + i + "] " + msg);
+            }
+        }
+    }
+
+    /**
+     * Prints a blue [number of the lines] for example [25]
+     *
+     * @param i   the number inside the []
+     * @param max the maximum Number of the list (important for the amount of " " in front of the number)
+     */
+    public void printEditorInput(int i, int max) {
+        if (style != 1) {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.print("[" + ANSI_INPUT + "   " + i + ANSI_RESET + "] ");
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.print("[" + ANSI_INPUT + "  " + i + ANSI_RESET + "] ");
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.print("[" + ANSI_INPUT + " " + i + ANSI_RESET + "] ");
+            } else {
+                System.out.print("[" + ANSI_INPUT + i + ANSI_RESET + "] ");
+            }
+        } else {
+            if (max / 1000. > 1 && i / 10. < 1) {
+                System.out.print("[   " + i + "] ");
+            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
+                System.out.print("[  " + i + "] ");
+            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
+                System.out.print("[ " + i + "] ");
+            } else {
+                System.out.print("[" + i + "] ");
+            }
+        }
+    }
+
+    /**
+     * Prints a yellow [J-CONSOLE> in front of the message and the msg after it also in yellow
+     *
+     * @param msg the message in yellow after the [J-CONSOLE>
+     */
+    private void printEditor(String msg) {
+        if (style == 0 || style == 2)
+            System.out.print("[" + ANSI_INPUT + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_INPUT + msg + ANSI_RESET + "> ");
+        else if (style == 1)
+            System.out.print("[J-CONSOLE> " + msg + "> ");
+        else {
+            String[] msgList = msg.split("/");
+            if (msgList.length < 3) {
+                System.out.print("[" + ANSI_INPUT + msg + ANSI_RESET + "> ");
+            } else {
+                System.out.print("[" + ANSI_INPUT + ".../" + msgList[msgList.length - 1] + ANSI_RESET + "> ");
+            }
+        }
+    }
+
+    //-----------+
+
+    private void callSetConfig() {
+        if (directoryName == null)
+            printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
+        else {
+            setConfig(directoryName + "/config.properties");
+            if (copyConfig) {
+                copyConfigFile(directoryName + "/config.properties");
+            }
+        }
+    }
+
+    private void setConfig(String targetDirectory) {
+        configFile = targetDirectory;
+    }
+
+    private void copyConfigFile(String targetDirectory) {
+        Properties prop;
+        try {
+            prop = getPropertiesFile("config.properties", false, true);
+            prop.store(new FileOutputStream(targetDirectory), "#'default' can be used for: defaultExDate, defaultSerialNumber, defaultValidity, defaultStDate");
+            printInfo("successfully copied the config.properties file");
+        } catch (IOException ioe) {
+            printError("default config file couldn't be found");
+            printError("copy failed");
+        }
+
+    }
+
+    private void callChangeStyle() {
+        if (styleToggle) {
+            toggleStyle();
+        } else if (cStyle == null || cStyle.equals("default") || cStyle.equals("d")) {
+            style = 0;
+        } else if (cStyle.equals("non-colored") || cStyle.equals("nc")) {
+            style = 1;
+        } else if (cStyle.equals("one-colored") || cStyle.equals("oc")) {
+            style = 2;
+        } else if (cStyle.equals("one-lettered") || cStyle.equals("ol")) {
+            style = 3;
+        } else if (cStyle.equals("simple") || cStyle.equals("s")) {
+            style = 4;
+        } else {
+            printError("the style " + cStyle + " doesn't exist");
+        }
+
+        setMessageColor();
+    }
+
+    private void toggleStyle() {
+        style = (style + 1) % 5;
+    }
+
+    private void setMessageColor() {
+        if (style == 2) {
+            ANSI_ERROR = ANSI_INPUT;
+            ANSI_HELP = ANSI_INPUT;
+            ANSI_OUTPUT = ANSI_INPUT;
+        } else {
+            ANSI_ERROR = "\u001B[91m";
+            ANSI_HELP = "\u001B[92m";
+            ANSI_OUTPUT = "\u001B[94m";
+        }
+    }
+
+    private void callDecodeDocument(Main main) {
+        docDirectory = docDirectory != null ? docDirectory : main.pFile;
+        if (fileName == null || certFileName == null)
+            printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
+        else
+            new TextEncodingDecoding().main(main.pFile, fileName, certFileName, docDirectory, 1, main);
+    }
+
+    private void callEncodeDocument(Main main) {
+        certDirectory = certDirectory != null ? certDirectory : main.pFile;
+        docDirectory = docDirectory != null ? docDirectory : main.pFile;
+        if (fileName == null || certFileName == null)
+            main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
+        else
+            new TextEncodingDecoding().main(certDirectory, fileName, certFileName, docDirectory, 0, main);
+    }
+
+    private void callReadCertificate(Main main) {
+        if (fileName == null)
+            main.printError("you have to enter a file name with the argument --file <filename>");
+        else {
+            try {
+                new EditCertificate().printCertDataToConsole(new EditCertificate().read(main.pFile + "/" + fileName, main), main);
+            } catch (IOException e) {
+                printError("Couldn't find the certificate to read");
+            } catch (CertificateException e) {
+                printError("Couldn't read the certificate");
+            }
+        }
+    }
+
+    private void callWriteCertificate(Main main, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeyS, long dSerNumber, String dSignAlg) {
+        if (fileName == null)
+            main.printError("you have to enter a file name with the argument --file <filename>");
+        else {
+            List<Date> dates = prepareCertificateWriterVariable(dIssuerName, dSubjectName, dStDate, dExDate, dKeyS, dSerNumber, dSignAlg);
+            Date stDate = dates.get(0);
+            Date exDate = dates.get(1);
+
+            printInfo("generating key pair");
+            KeyPair keyPair;
+
+            try {
+                keyPair = generateKeyPair(keys);
+
+                String pathFile = certTargetDirectory != null ? certTargetDirectory : main.pFile;
+
+                try {
+                    new EditCertificate().write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keyPair, serNumber, stDate, exDate, signAlg, false, main);
+                } catch (CertificateEncodingException e) {
+                    printError("Couldn't encode the certificate");
+                } catch (SignatureException e) {
+                    printError("Couldn't sign the certificate");
+                } catch (InvalidKeyException e) {
+                    printError("The generated key isn't valid");
+                } catch (IOException e) {
+                    printError("Couldn't write the certificate");
+                } catch (NoSuchAlgorithmException e) {
+                    printError("The entered algorithm is wrong");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (bRead) {
+                callReadCertificate(main);
+            }
+        }
+    }
+
+    private List<Date> prepareCertificateWriterVariable(String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeySize, long dSerNumber, String dSignAlg) {
+        List<Date> outputList = new ArrayList<>();
+
+        printInfo("checking inputs");
+        iName = iName != null ? iName : dIssuerName;
+        sName = sName != null ? sName : dSubjectName;
+        outputList.add(0, sDate != null ? stringToDate(sDate) : dStDate);
+        outputList.add(1, eDate != null ? stringToDate(eDate) : dExDate);
+        keys = keys > 512 ? keys : dKeySize;
+        serNumber = serNumber > 1 ? serNumber : dSerNumber;
+        signAlg = signAlg != null ? signAlg : dSignAlg;
+
+        return outputList;
+    }
+
+    private KeyPair generateKeyPair(int KeySize) throws Exception {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(KeySize);
+        return keyGen.generateKeyPair();
+    }
+
+    private void callReadDocument(Main main) {
+        if (fileName == null)
+            main.printError("you have to enter a file name with the argument --file <filename>");
+        else
+            new EditDocument().read(fileName, main.pFile, main);
+    }
+
+    private void callWriteDocument(Main main, int dLineNumber) {
+        if (fileName == null)
+            main.printError("you have to enter a file name with the argument --file <filename>");
+        else {
+            lines = lines > 1 ? lines : dLineNumber;
+            new EditDocument().write(fileName, main.pFile, main, lines);
+        }
+    }
+
+    /**
+     * The function stringToDate() converts a String (i) into a date value. Important for that is, that the String got
+     * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
+     * return the date in "Date" format.
+     *
+     * @param i string in DD-MM-YYYY format
+     * @return date in Date format as output
+     */
+    public Date stringToDate(String i) {
+        int d = 0, y = 0, m = 0;
+        try {
+            String[] sa = i.split("");
+            d = (Integer.parseInt(sa[0])) * 10 + (Integer.parseInt(sa[1]));
+            m = (Integer.parseInt(sa[3])) * 10 + (Integer.parseInt(sa[4]));
+            y = (Integer.parseInt(sa[6])) * 1000 + (Integer.parseInt(sa[7])) * 100 + (Integer.parseInt(sa[8])) * 10 + (Integer.parseInt(sa[9]));
+        } catch (Exception e) {
+            // out.println(e);
+            System.out.println("No valid date");
+            System.exit(1);
+        }
+        return new GregorianCalendar(y, m - 1, d).getTime();
     }
 
     /**
@@ -418,362 +759,33 @@ public class Main {
         }
     }
 
-    /**
-     * The function stringToDate() converts a String (i) into a date value. Important for that is, that the String got
-     * the format DD-MM-YYYY. If that isn't the case it will close the program with System.exit(). If it works it will
-     * return the date in "Date" format.
-     *
-     * @param i string in DD-MM-YYYY format
-     * @return date in Date format as output
-     */
-    public Date stringToDate(String i) {
-        int d = 0, y = 0, m = 0;
-        try {
-            String[] sa = i.split("");
-            d = (Integer.valueOf(sa[0])) * 10 + (Integer.valueOf(sa[1]));
-            m = (Integer.valueOf(sa[3])) * 10 + (Integer.valueOf(sa[4]));
-            y = (Integer.valueOf(sa[6])) * 1000 + (Integer.valueOf(sa[7])) * 100 + (Integer.valueOf(sa[8])) * 10 + (Integer.valueOf(sa[9]));
-        } catch (Exception e) {
-            // out.println(e);
-            System.out.println("No valid date");
-            System.exit(1);
-        }
-        Date o = new GregorianCalendar(y, m - 1, d).getTime();
-        // out.println(o);
-        return o;
+    private Date setDefaultPropertiesDates(String propertiesFileInput, long milSecValid) {
+        Date timeNow = new Date();
+        if (propertiesFileInput.equals("default")) {
+            timeNow.setTime(timeNow.getTime() + milSecValid);
+            return timeNow;
+        } else
+            return stringToDate(propertiesFileInput);
     }
 
-    /**
-     * Starts the Certificate generator. Needs all default values for the Certificate parameters.
-     *
-     * @param rc         editCertificate class object that's needed to start the Certificate generator in the that Class
-     * @param dStDate    default start date the Certificate generator should use if it isn't set
-     * @param dExDate    default expiry date the Certificate generator should use if it isn't set
-     * @param dKeyS      default key size the Certificate generator should use if it isn't set
-     * @param dSerNumber default serial number the Certificate generator should use if it isn't set
-     * @param dSignAlg   default signature algorithm the Certificate generator should use if it isn't set
-     * @param main       main class object
-     */
-    private void startWriter(EditCertificate rc, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeyS, long dSerNumber, String dSignAlg, Main main) {
-        printInfo("checking inputs");
-        iName = iName != null ? iName : dIssuerName;
-        sName = sName != null ? sName : dSubjectName;
-        Date stDate = sDate != null ? stringToDate(sDate) : dStDate;
-        Date exDate = eDate != null ? stringToDate(eDate) : dExDate;
-        keys = keys > 512 ? keys : dKeyS;
-        serNumber = serNumber > 1 ? serNumber : dSerNumber;
-        signAlg = signAlg != null ? signAlg : dSignAlg;
-
-        printInfo("generating key pair");
-
-        KeyPairGenerator keyGen = null;
-        try {
-            keyGen = KeyPairGenerator.getInstance("RSA");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        keyGen.initialize(keys);
-        KeyPair keypair = keyGen.generateKeyPair();
-
-        String pathFile = certTargetDirectory != null ? certTargetDirectory :  main.pFile;
-
-        try {
-            rc.write(pathFile + "/" + fileName, main.pFile + "/" + fileName, "CN = " + iName, "CN = " + sName, keypair, serNumber, stDate, exDate, signAlg, false, main);
-        } catch (CertificateEncodingException e) {
-            printError("Couldn't encode the certificate");
-        } catch (SignatureException e) {
-            printError("Couldn't sign the certificate");
-        } catch (InvalidKeyException e) {
-            printError("The generated key isn't valid");
-        } catch (IOException e) {
-            printError("Couldn't write the certificate");
-        } catch (NoSuchAlgorithmException e) {
-            printError("The entered algorithm is wrong");
-        }
-
-        if (bRead) {
+    private Properties callGetPropertiesFile(String defaultConfigFileName) {
+        if (!configFile.equals("default")) {
             try {
-                rc.printCertDataToConsole(rc.read(pathFile + "/" + fileName, main), main);
-            } catch (IOException e) {
-                printError("[ERROR] Couldn't find the certificate to read");
-            } catch (CertificateException e) {
-                printError("[ERROR] Couldn't read the certificate");
-            }
-        }
-
-    }
-
-    /**
-     * Starts the Certificate reader. Needs all default values for the reading parameters.
-     *
-     * @param rc   readCertificate class object that's needed to start the Certificate reader in the that Class
-     * @param main main class object
-     */
-    private void startReader(EditCertificate rc, Main main) {
-        try {
-            rc.printCertDataToConsole(rc.read(main.pFile + "/" + fileName, main), main);
-        } catch (IOException e) {
-            printError("Couldn't find the certificate to read");
-        } catch (CertificateException e) {
-            printError("Couldn't read the certificate");
-        }
-    }
-
-    /**
-     * Reads the config.properties file in the main project folder or a custom config.properties file given with the
-     * --config parameter
-     *
-     * @param configFileName name of the config file (with directory unless its the the config.properties file in hte resources folder.
-     * @param printMsg       should be true unless it gets called in the test run
-     * @param defaultPath    if the name is just config.properties -> true <br>
-     *                       if the name is with directory (for example C:/.../config.properties -> false
-     * @return object of the type Properties (with object.getProperty(property) you can get the value for the property
-     */
-    public Properties readProperties(String configFileName, boolean printMsg, boolean defaultPath) throws IOException {
-        if (printMsg)
-            if (defaultPath)
-                printInfo("loading config.properties");
-            else
-                printInfo("loading " + configFileName);
-        Properties prop = new Properties();
-
-        if (defaultPath) {
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFileName)) {
-                if (input != null)
-                    prop.load(input);
-                else
-                    throw new IOException();
-                if (printMsg)
-                    printInfo("successfully loaded settings from " + configFileName);
-
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        } else {
-            try (InputStream input = new FileInputStream(configFileName)) {
-                if (input != null)
-                    prop.load(input);
-                else
-                    throw new IOException();
-
-                printInfo("successfully loaded settings from " + configFileName);
-
-            } catch (IOException ex) {
-                if (printMsg) {
-                    throw new IOException("");
-                }
-            }
-        }
-        return prop;
-    }
-
-    /**
-     * Resets all the Mains global variables needed for JCommander
-     */
-    private void setToDefault() {
-        writeC = false;
-        readC = false;
-        readD = false;
-        cd = false;
-        writeD = false;
-        gHelp = false;
-        et = false;
-        dt = false;
-        setConfig = false;
-        //-------+
-        iName = null;
-        sName = null;
-        sDate = null;
-        eDate = null;
-        keys = 0;
-        serNumber = 0L;
-        fileName = null;
-        signAlg = null;
-        bRead = false;
-        help = false;
-        certFileName = null;
-        lines = 0;
-        copyConfig = false;
-        certTargetDirectory = null;
-        cs = false;
-        certDirectory = null;
-        docDirectory = null;
-        cStyle = null;
-        styleToggle = false;
-    }
-
-    /**
-     * Prints the message with a blue [INFO] in front of it
-     *
-     * @param msg the message after the [INFO]
-     */
-    public void printInfo(String msg) {
-        if (style == 0 || style == 2)
-            System.out.println("[" + ANSI_OUTPUT + "INFO" + ANSI_RESET + "] " + msg);
-        else if (style == 1)
-            System.out.println("[INFO] " + msg);
-        else if (style == 3)
-            System.out.println("[" + ANSI_OUTPUT + "I" + ANSI_RESET + "] " + msg);
-        else
-            System.out.println("[" + ANSI_OUTPUT + "+" + ANSI_RESET + "] " + msg);
-    }
-
-    /**
-     * Prints the message with a red [ERROR] in front of it
-     *
-     * @param msg the message after the [ERROR]
-     */
-    public void printError(String msg) {
-        if (style == 0 || style == 2)
-            System.out.println("[" + ANSI_ERROR + "ERROR" + ANSI_RESET + "] " + msg);
-        else if (style == 1)
-            System.out.println("[ERROR] " + msg);
-        else if (style == 3)
-            System.out.println("[" + ANSI_ERROR + "E" + ANSI_RESET + "] " + msg);
-        else
-            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
-    }
-
-    /**
-     * Prints the message with a green [HELP] in front of it
-     *
-     * @param msg the message after the [HELP]
-     */
-    public void printHelp(String msg) {
-        if (style == 0 || style == 2)
-            System.out.println("[" + ANSI_HELP + "HELP" + ANSI_RESET + "] " + msg);
-        else if (style == 1)
-            System.out.println("[HELP] " + msg);
-        else if (style == 3)
-            System.out.println("[" + ANSI_HELP + "H" + ANSI_RESET + "] " + msg);
-        else
-            System.out.println("[" + ANSI_HELP + "*" + ANSI_RESET + "] " + msg);
-    }
-
-    /**
-     * Prints the message with a blue [-] in front of it
-     *
-     * @param msg the message after the [-]
-     */
-    public void printCertData(String msg) {
-        if (style != 1)
-            System.out.println("[" + ANSI_OUTPUT + "-" + ANSI_RESET + "] " + msg);
-        else
-            System.out.println("[-] " + msg);
-    }
-
-    /**
-     * Prints the message with a red [-] in front of it
-     *
-     * @param msg the message after the [-]
-     */
-    public void printRedCertData(String msg) {
-        if (style != 1)
-            System.out.println("[" + ANSI_ERROR + "-" + ANSI_RESET + "] " + msg);
-        else
-            System.out.println("[-] " + msg);
-    }
-
-    /**
-     * Prints the message with a blue [number of the lines] in front of it for example [25]
-     *
-     * @param msg the message after the [number of the lines]
-     * @param i   the number inside the []
-     * @param max the maximum Number of the list (important for the amount of " " in front of the number)
-     */
-    public void printDocumentData(String msg, int i, int max) {
-        if (style != 1) {
-            if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.println("[" + ANSI_OUTPUT + "   " + i + ANSI_RESET + "] " + msg);
-            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.println("[" + ANSI_OUTPUT + "  " + i + ANSI_RESET + "] " + msg);
-            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.println("[" + ANSI_OUTPUT + " " + i + ANSI_RESET + "] " + msg);
-            } else {
-                System.out.println("[" + ANSI_OUTPUT + i + ANSI_RESET + "] " + msg);
-            }
-        } else {
-            if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.println("[   " + i + "] " + msg);
-            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.println("[  " + i + "] " + msg);
-            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.println("[ " + i + "] " + msg);
-            } else {
-                System.out.println("[" + i + "] " + msg);
-            }
-        }
-    }
-
-    /**
-     * Prints a yellow [J-CONSOLE> in front of the message and the msg after it also in yellow
-     *
-     * @param msg the message in yellow after the [J-CONSOLE>
-     */
-    public void printEditor(String msg) {
-        if (style == 0 || style == 2)
-            System.out.print("[" + ANSI_INPUT + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_INPUT + msg + ANSI_RESET + "> ");
-        else if (style == 1)
-            System.out.print("[J-CONSOLE> " + msg + "> ");
-        else {
-            String[] msgList = msg.split("/");
-            if (msgList.length < 3) {
-                System.out.print("[" + ANSI_INPUT + msg + ANSI_RESET + "> ");
-            } else {
-                System.out.print("[" + ANSI_INPUT + ".../" + msgList[msgList.length - 1] + ANSI_RESET + "> ");
-            }
-        }
-    }
-
-    /**
-     * Prints a blue [number of the lines] for example [25]
-     *
-     * @param i   the number inside the []
-     * @param max the maximum Number of the list (important for the amount of " " in front of the number)
-     */
-    public void printEditorInput(int i, int max) {
-        if (style != 1) {
-            if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.print("[" + ANSI_INPUT + "   " + i + ANSI_RESET + "] ");
-            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.print("[" + ANSI_INPUT + "  " + i + ANSI_RESET + "] ");
-            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.print("[" + ANSI_INPUT + " " + i + ANSI_RESET + "] ");
-            } else {
-                System.out.print("[" + ANSI_INPUT + i + ANSI_RESET + "] ");
-            }
-        } else {
-            if (max / 1000. > 1 && i / 10. < 1) {
-                System.out.print("[   " + i + "] ");
-            } else if ((max / 1000. > 1 && i / 100. < 1) || (max / 100. > 1 && i / 10. < 1)) {
-                System.out.print("[  " + i + "] ");
-            } else if ((max / 1000. > 1 && i / 1000. < 1) || (max / 100. > 1 && i / 100. < 1) || (max / 10. > 1 && i / 10. < 1)) {
-                System.out.print("[ " + i + "] ");
-            } else {
-                System.out.print("[" + i + "] ");
-            }
-        }
-    }
-
-    /**
-     * This function sets the public variable configFile to the String file. If copy is true it also copies the config.properties file to the
-     * String file.
-     *
-     * @param file The file that should be set as config file
-     * @param copy if the program should copy the config.properties file to the String file
-     */
-    public void setAndCopyConfig(String file, boolean copy) {
-        Properties prop;
-        if (copy) {
-            try {
-                prop = readProperties("config.properties", false, true);
-                prop.store(new FileOutputStream(file), "#'default' can be used for: defaultExDate, defaultSerialNumber, defaultValidity, defaultStDate");
-                printInfo("successfully copied the config.properties file");
+                return getPropertiesFile(configFile, true, false);
             } catch (IOException ioe) {
+                printError("no file could be found at " + defaultConfigFileName);
+                printInfo("the name of the config file must be config.properties");
+                printInfo("using default config.properties file");
+                return new Properties();
+            }
+        } else {
+            try {
+                return getPropertiesFile(defaultConfigFileName, true, true);
+            } catch (Exception e) {
                 printError("default config file couldn't be found");
-                printError("copy failed");
+                printInfo("using default configs");
+                return new Properties();
             }
         }
-        configFile = file;
     }
 }
