@@ -298,21 +298,21 @@ public class Main {
                             certDirectory = defaultString(certDirectory, main.pFile);
                             docDirectory = defaultString(docDirectory, main.pFile);
                             if (fileName == null || certFileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
+                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
                             else
                                 tc.main(certDirectory, fileName, certFileName, docDirectory, 0, main);
 
                         } else if (dt) {
                             docDirectory = defaultString(docDirectory, main.pFile);
                             if (fileName == null || certFileName == null)
-                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile");
+                                main.printError("you have to enter a file name with the argument --file <filename> and a certificate file name with the argument --certFile <file of the certificate>");
                             else
                                 tc.main(main.pFile, fileName, certFileName, docDirectory, 1, main);
                         } else if (setConfig) {
                             if (directoryName == null)
                                 main.printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
                             else
-                                setConfigFile(directoryName + "/config.properties", copyConfig);
+                                setAndCopyConfig(directoryName + "/config.properties", copyConfig);
                         }
                     }
                 }
@@ -827,7 +827,7 @@ public class Main {
      * @param file The file that should be set as config file
      * @param copy if the program should copy the config.properties file to the String file
      */
-    public void setConfigFile(String file, boolean copy) {
+    public void setAndCopyConfig(String file, boolean copy) {
         Properties prop;
         if (copy) {
             try {
