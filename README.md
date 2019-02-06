@@ -78,4 +78,4 @@ exit [exits the console]
 
 **5 Links to older versions**
 
-[An older version without the Console](../withoutConsole)
+[An older version without the Console](tree/withoutConsole)
