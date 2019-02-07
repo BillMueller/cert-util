@@ -109,12 +109,38 @@ public class Main {
                     if (in.split("/")[0].length() == 2) {
                         main.pFile = in;
                         start = true;
-                    } else if (!in.equals("exit")) {
+                    } else if (!in.equals("exit") && !in.equals("login")) {
                         main.printError("the path file you entered is not valid.");
                         main.printInfo("Use '/' for example C:/Users");
-                    } else {
+                    } else if (in.equals("exit")){
                         main.printInfo("exiting ...");
                         System.exit(1);
+                    } else {
+                        User user = new User();
+                        main.printEditor("Enter Username");
+                        boolean login = user.setUser(main, in = sc.nextLine());
+                        while(login){
+                            if(in.equals("exit")){
+                                main.printInfo("exiting ...");
+                                System.exit(1);
+                            }
+                            main.printError("The Username you've entered isn't valid");
+                            main.printEditor("Enter Username");
+                            login = user.setUser(main, in = sc.nextLine());
+                        }
+                        Console console = System.console();
+                        while(!user.getPassword().equals(in = main.style > 2 ? new String(console.readPassword("[" + ANSI_INPUT + "Enter Password" + ANSI_RESET + "> ")) : new String(console.readPassword("[" + ANSI_INPUT + "J-CONSOLE" + ANSI_RESET + "> " + ANSI_INPUT + "Enter Password" + ANSI_RESET + "> ")))){
+                            if(in.equals("exit")){
+                                main.printInfo("exiting ...");
+                                System.exit(1);
+                            }
+                            main.printError("The password you've entered isn't valid");
+                        }
+                        main.cd = false;
+                        start = true;
+                        main.pFile = user.getDefaultDirectory();
+                        main.style = user.getDefaultStyle();
+                        main.printInfo("Welcome "+ user.getName());
                     }
                 }
             }
@@ -135,7 +161,7 @@ public class Main {
                 }
             }
         }
-        printInfo("exiting...");
+        main.printInfo("exiting...");
     }
 
     /**
