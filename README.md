@@ -65,7 +65,7 @@ setConfig  / sc [changes the config file]
 changeDirectory / cd [changes back to the "Enter Directory" input line]
 
 changeStyle / cs [changes the console style]
-* --toggle - toggles to the next style
+* --toggle - toggles to the next style `optional`
 * --style [the style you want the console to have] `optional` - if you leave that parameter away the console will use the default style    
 **the styles available:**
     * default / d - the default style
