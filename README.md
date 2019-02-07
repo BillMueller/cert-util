@@ -48,7 +48,7 @@ _**Important:** the friend has to use **your** certificate for encoding_
 
 **3.4.1 write a .txt document**   
 _**Important:** you need to think of the number of lines before you execute the command to call the internal writer_
-* use the command `wd --file your_file_name [--lines number of lines]` (the --lines parameter is optional and if not used by default 10)
+* use the command `wd --file your_file_name [--replace]` (the --replace parameter will replace the old text in the file and is optional)
 * you will see a line number and you can write
 * use "enter" to go to the next line
 * the editor will return to console after you wrote the number of lines you chose at the start
