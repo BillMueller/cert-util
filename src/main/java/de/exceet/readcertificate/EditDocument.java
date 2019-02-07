@@ -1,6 +1,7 @@
 package de.exceet.readcertificate;
 
 import java.io.*;
+import java.util.Date;
 import java.util.Scanner;
 
 public class EditDocument {
@@ -46,31 +47,79 @@ public class EditDocument {
      * @param f             file name
      * @param pF            directory name
      * @param main          main object of the Main class (needed to call all printError/-Info/-Help/-Console functions)
-     * @param numberOfLines number of lines the file will have
      */
-    public void write(String f, String pF, Main main, int numberOfLines) {
+    public void write(String f, String pF, Main main, boolean replace) {
         BufferedWriter bw;
-        if (pF == null || f == null)
-            main.printError("you need to enter a file name");
-        else {
+        try {
+            bw = new BufferedWriter(new FileWriter(new File(pF + "/" + f + ".txt"), !replace));
+            Scanner sc = new Scanner(System.in);
+            String in;
+            main.printInfo("Now you can write ");
+            int c = 1, exit = 0;
+            bw.write("--- " + new Date() + " ---");
+            bw.newLine();
             try {
-                bw = new BufferedWriter(new FileWriter(pF + "/" + f + ".txt"));
-                Scanner sc = new Scanner(System.in);
-                String in;
-                main.printInfo("Now you can write " + numberOfLines + " line/-s to your selected document:");
-                int c = 0;
-                while (numberOfLines > c) {
-                    main.printEditorInput(c + 1, numberOfLines);
-                    in = sc.nextLine();
+                c = c + (int) new BufferedReader(new FileReader(pF + "/" + f + ".txt")).lines().count();
+            } catch (IOException ioe) {
+                main.printInfo("generating file");
+            }
+            while (2 > exit) {
+                main.printEditorInput(c + 1, 1);
+                in = sc.nextLine();
+                if (in.equals("") || in.split(" ").length == 0)
+                    exit++;
+                else {
+                    if (exit == 1) {
+                        exit = 0;
+                        bw.newLine();
+                    }
                     bw.write(in);
                     bw.newLine();
-                    //out = out + in + "\n";
-                    c++;
                 }
-                bw.close();
-            } catch (IOException ioe) {
-                main.printError("directory couldn't be found");
+                c++;
             }
+            bw.newLine();
+            bw.close();
+        } catch (IOException ioe) {
+            main.printError("directory couldn't be found");
+
         }
     }
+
+//    public void addLine(String f, String pF, Main main) {
+//        BufferedWriter bw;
+//        try {
+//            bw = new BufferedWriter(new FileWriter(new File(pF + "/" + f + ".txt"), true));
+//            Scanner sc = new Scanner(System.in);
+//            String in;
+//            main.printInfo("Now you can write ");
+//            int c = 1, exit = 0;
+//            bw.write("--- " + new Date() + " ---");
+//            bw.newLine();
+//            try {
+//                c = c + (int) new BufferedReader(new FileReader(pF + "/" + f + ".txt")).lines().count();
+//            } catch (IOException ioe) {
+//                main.printInfo("generating file");
+//            }
+//            while (2 > exit) {
+//                main.printEditorInput(c + 1, 1);
+//                in = sc.nextLine();
+//                if (in.equals("") || in.split(" ").length == 0)
+//                    exit++;
+//                else {
+//                    if (exit == 1) {
+//                        exit = 0;
+//                        bw.newLine();
+//                    }
+//                    bw.write(in);
+//                    bw.newLine();
+//                }
+//                c++;
+//            }
+//            bw.newLine();
+//            bw.close();
+//        } catch (IOException ioe) {
+//            main.printError("directory couldn't be found");
+//        }
+//
 }

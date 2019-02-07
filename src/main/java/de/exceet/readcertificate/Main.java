@@ -65,8 +65,6 @@ public class Main {
     private boolean bRead;
     @Parameter(names = {"--help", "-h"}, description = "prints out a help for the command entered before")
     private boolean help;
-    @Parameter(names = "--lines", description = "prints out the number of lines the document should have")
-    private int lines;
     @Parameter(names = "--copyConfig", description = "if the program should copy the config file to the directory")
     private boolean copyConfig;
     @Parameter(names = "--directory", description = "set the directory name")
@@ -81,6 +79,8 @@ public class Main {
     private String cStyle;
     @Parameter(names = "--toggle", description = "toggle the style")
     private boolean styleToggle;
+    @Parameter(names = "--replace")
+    private boolean replace;
 
     /**
      * Main function with the J-console input functionality <br>
@@ -166,7 +166,6 @@ public class Main {
                     String dPropsExDate = props.get(5);
                     String dPropsValidity = props.get(6);
                     String dSignAlg = props.get(7);
-                    int dLineNumber = Integer.parseInt(props.get(8));
 
                     long milSecValid = !dPropsValidity.equals("default") ? Long.valueOf(dPropsValidity) : 31536000000L;
 
@@ -175,7 +174,7 @@ public class Main {
                     Date dStDate = setDefaultPropertiesDates(dPropsStDate, 0);
                     Date dExDate = setDefaultPropertiesDates(dPropsExDate, milSecValid);
 
-                    callCommands(main, dLineNumber, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
+                    callCommands(main, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
                 }
 
             }
@@ -255,7 +254,6 @@ public class Main {
         bRead = false;
         help = false;
         certFileName = null;
-        lines = 0;
         copyConfig = false;
         certTargetDirectory = null;
         cs = false;
@@ -263,6 +261,7 @@ public class Main {
         docDirectory = null;
         cStyle = null;
         styleToggle = false;
+        replace = false;
     }
 
     //-----------+
@@ -662,14 +661,12 @@ public class Main {
      * Calls all functions needed when the "writeDocument" command is executed
      *
      * @param main        main class object (needed for the called functions and for printing to the console)
-     * @param dLineNumber default number of lines
      */
-    private void callWriteDocument(Main main, int dLineNumber) {
+    private void callWriteDocument(Main main) {
         if (fileName == null)
             main.printError("you have to enter a file name with the argument --file <filename>");
         else {
-            lines = lines > 1 ? lines : dLineNumber;
-            new EditDocument().write(fileName, main.pFile, main, lines);
+            new EditDocument().write(fileName, main.pFile, main, replace);
         }
     }
 
@@ -737,7 +734,7 @@ public class Main {
                 printHelp("writeDocument | wd\t\t\t[writes a *.txt file to you file name]");
             }
             printHelp("\t\t--file\t\t\t<name of the file to write>");
-            printHelp("\t\t--lines\t\t\t<amount of lines you want to write>");
+            printHelp("\t\t--replace\t\t[replace the existing text]");
         } else if (x == 6) {
             printHelp("writeCertificate | wc\t\t[generates a certificate]");
             printHelp("readCertificate | rc\t\t[reads a certificate]");
@@ -828,7 +825,6 @@ public class Main {
         output.add(5, properties.getProperty("defaultExDate", "default"));
         output.add(6, properties.getProperty("defaultValidity", "default"));
         output.add(7, properties.getProperty("defaultSignatureAlgorithm", "SHA256withRSA"));
-        output.add(8, properties.getProperty("defaultLineNumber", "10"));
 
         return output;
     }
@@ -907,7 +903,6 @@ public class Main {
      * Calls the needed call* functions if a command gets executed
      *
      * @param main         main function (needed for the following functions)
-     * @param dLineNumber  default value (needed for the following functions)
      * @param dIssuerName  default value (needed for the following functions)
      * @param dSubjectName default value (needed for the following functions)
      * @param dStDate      default value (needed for the following functions)
@@ -916,11 +911,11 @@ public class Main {
      * @param dSerNumber   default value (needed for the following functions)
      * @param dSignAlg     default value (needed for the following functions)
      */
-    private void callCommands(Main main, int dLineNumber, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dSignAlg) {
+    private void callCommands(Main main, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dSignAlg) {
         if (readD)
             callReadDocument(main);
         else if (writeD)
-            callWriteDocument(main, dLineNumber);
+            callWriteDocument(main);
         else if (writeC)
             callWriteCertificate(main, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
         else if (readC)
