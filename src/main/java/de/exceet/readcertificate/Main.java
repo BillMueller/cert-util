@@ -138,6 +138,11 @@ public class Main {
         printInfo("exiting...");
     }
 
+    /**
+     * Gets called if a command is entered and calls the needed functions
+     *
+     * @param main main class object (needed for the following functions)
+     */
     private void run(Main main) {
         if (gHelp || help) {
             callHelp(main);
