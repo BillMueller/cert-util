@@ -6,12 +6,14 @@ import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 
 import javax.security.auth.x500.X500Principal;
+import javax.security.cert.CertificateException;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -31,47 +33,16 @@ public class EditCertificate {
      * @param startDate          Date:       the first day the certificate is valid
      * @param expiryDate         Date:       the last day the certificate is valid
      * @param signatureAlgorithm String:     the signatureAlgorithm thats used to sign the certificate
-     * @throws Exception Needed if some of the inputs are wrong
      */
-    public void write(String file, String pKfile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test, Main main) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
+    public void write(String file, String pKFile, String IssuerDnName, String SubjectDnName, KeyPair keyPair, long serNumber, Date startDate, Date expiryDate, String signatureAlgorithm, boolean test, Main main) throws CertificateEncodingException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, IOException {
         main.printInfo("starting certificate generator");
 
-        // define serial number, certificate generator and the issuer/subjectdn
-        BigInteger serialNumber = BigInteger.valueOf(serNumber);
-        X509V1CertificateGenerator certGen = new X509V1CertificateGenerator();
-        X500Principal idnName = new X500Principal(IssuerDnName);
-        X500Principal sdnName = new X500Principal(SubjectDnName);
+        X509Certificate cert = setCertificateData(serNumber, IssuerDnName, SubjectDnName, startDate, expiryDate, keyPair, signatureAlgorithm).generate(keyPair.getPrivate());
 
-        // add all necessary informations to the certificate
-        certGen.setSerialNumber(serialNumber);
-        certGen.setIssuerDN(idnName);
-        certGen.setNotBefore(startDate);
-        certGen.setNotAfter(expiryDate);
-        certGen.setSubjectDN(sdnName);
-        certGen.setPublicKey(keyPair.getPublic());
-        certGen.setSignatureAlgorithm(signatureAlgorithm);
-
-        // generate the certificate and use the private key to decode
-        X509Certificate cert = certGen.generate(keyPair.getPrivate());
-
-        // convert the certificate to a pem certificate
-        String output;
-        BASE64Encoder encoder = new BASE64Encoder();
-        output = X509Factory.BEGIN_CERT;
-        output = output + "\n" + encoder.encodeBuffer(cert.getEncoded());
-        output = output + X509Factory.END_CERT;
-
-        // System.out.println(output);
-        main.printInfo("writing certificate to " + file + ".crt");
-
-        // write the String into the file ("mycertificate.crt")
-        FileWriter wr = new FileWriter(file + ".crt");
-        wr.write(output);
-        wr.flush();
-        wr.close();
+        writeCertificateToFile(cert, main, file);
 
         if (!test) {
-            FileUtils.writeByteArrayToFile(new File(pKfile + "_private_key"), keyPair.getPrivate().getEncoded());
+            writePrivateKeyToFile(pKFile, keyPair);
         }
     }
 
@@ -84,56 +55,9 @@ public class EditCertificate {
      * @throws javax.security.cert.CertificateException Needed if some of the inputs are wrong
      */
     public List<String> read(String file, Main main) throws IOException, javax.security.cert.CertificateException {
-        main.printInfo("starting certificate reader");
-        // define input stream to read the file
-        InputStream inStream = new FileInputStream(file + ".crt");
+        javax.security.cert.X509Certificate cert = getCertificate(main, file);
 
-        // safe the certificate in "cert"
-        javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
-
-        // close the input steam
-        inStream.close();
-
-        // get the version and add one to it (since the program start counting at 0 while usually 1 is used for the first version
-        int v = cert.getVersion() + 1;
-
-        // define the first and last date when the certificate can be used as date 1 and 2 and define a String
-        Date date1 = cert.getNotBefore();
-        Date date2 = cert.getNotAfter();
-        String algorithm = cert.getSigAlgName();
-        boolean dateVal;
-        List<String> output = new ArrayList<>();
-
-        // test if the certificate is still valid
-        if (testDate(date1, date2)) {
-            // if it is valid -> set dateshow to ""
-            dateVal = true;
-        } else {
-            //if it is not valid -> set dateshow to "not "
-            dateVal = false;
-        }
-        // print the version and get and print serial number, issuer, validity, subject, subject public key info,
-        // hash code and the name of the signature algorithm
-
-        output.add(0, "Printing certificate data:");
-        output.add(1, "Version: " + v);
-        output.add(2, "Serial Number: " + cert.getSerialNumber());
-        output.add(3, "Issuer: " + cert.getIssuerDN());
-        output.add(4, "Subject: " + cert.getSubjectDN());
-        if (dateVal) {
-            output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is valid.");
-            output.add(6, "0");
-        } else {
-            output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is not valid.");
-            output.add(6, "1");
-        }
-        output.add(7, "Subject Public Key Info: " + cert.getPublicKey());
-        output.add(8, "Hash Code: " + cert.hashCode());
-        output.add(9, "Signature algorithm: " + algorithm + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
-
-        main.printInfo("successfully read certificate");
-
-        return output;
+        return prepareOutput(cert, main);
     }
 
     /**
@@ -172,5 +96,119 @@ public class EditCertificate {
         main.printCertData(input.get(7));
         main.printCertData(input.get(8));
         main.printCertData(input.get(9));
+    }
+
+    /**
+     * Sets certificate data to a new X509V1 certificate generator with the input of all data that needs to be set
+     *
+     * @param serNumber          serial number of the certificate to be generated
+     * @param IssuerDnName       issuer name of the certificate to be generated
+     * @param SubjectDnName      subject name of the certificate to be generated
+     * @param startDate          start date of the certificate to be generated
+     * @param expiryDate         expiry date of the certificate to be generated
+     * @param keyPair            key pair of the certificate to be generated
+     * @param signatureAlgorithm signature algorithm of the certificate to be generated
+     * @return the certificate generator
+     */
+    private X509V1CertificateGenerator setCertificateData(long serNumber, String IssuerDnName, String SubjectDnName, Date startDate, Date expiryDate, KeyPair keyPair, String signatureAlgorithm) {
+        X509V1CertificateGenerator certGen = new X509V1CertificateGenerator();
+
+        certGen.setSerialNumber(BigInteger.valueOf(serNumber));
+        certGen.setIssuerDN(new X500Principal(IssuerDnName));
+        certGen.setSubjectDN(new X500Principal(SubjectDnName));
+        certGen.setNotBefore(startDate);
+        certGen.setNotAfter(expiryDate);
+        certGen.setPublicKey(keyPair.getPublic());
+        certGen.setSignatureAlgorithm(signatureAlgorithm);
+
+        return certGen;
+    }
+
+    /**
+     * Writes the certificate cert to the file with the directory "file"
+     *
+     * @param cert certificate to be written to the file
+     * @param main main function object (needed for console prints)
+     * @param file directory for the certificate to be written to
+     * @throws IOException                  if the file couldn't be found
+     * @throws CertificateEncodingException if the certificate couldn't be encoded
+     */
+    private void writeCertificateToFile(Certificate cert, Main main, String file) throws IOException, CertificateEncodingException {
+        String output;
+        BASE64Encoder encoder = new BASE64Encoder();
+        output = X509Factory.BEGIN_CERT;
+        output = output + "\n" + encoder.encodeBuffer(cert.getEncoded());
+        output = output + X509Factory.END_CERT;
+
+        main.printInfo("writing certificate to " + file + ".crt");
+
+        FileWriter wr = new FileWriter(file + ".crt");
+        wr.write(output);
+        wr.flush();
+        wr.close();
+    }
+
+    /**
+     * Writes the Private key from the keyPair to the file PKFile with the ending _private_key
+     *
+     * @param pKFile  directory for the private key file to be written to
+     * @param keyPair key Pair that contains the private key to be written
+     * @throws IOException if the directory couldn't be found
+     */
+    private void writePrivateKeyToFile(String pKFile, KeyPair keyPair) throws IOException {
+        FileUtils.writeByteArrayToFile(new File(pKFile + "_private_key"), keyPair.getPrivate().getEncoded());
+    }
+
+    /**
+     * Gets the certificate from the directory "file"
+     *
+     * @param main main class object (needed to print to console)
+     * @param file directory where the certificate is found
+     * @return the certificate as X509 certificate
+     * @throws CertificateException if the file ins't a valid certificate
+     * @throws IOException          if the directory coudln't be found
+     */
+    private javax.security.cert.X509Certificate getCertificate(Main main, String file) throws CertificateException, IOException {
+        main.printInfo("starting certificate reader");
+        InputStream inStream = new FileInputStream(file + ".crt");
+
+        javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
+
+        inStream.close();
+
+        return cert;
+    }
+
+    /**
+     * Prepares the output for the "printCertDataToConsole()" function by putting all data into a List
+     *
+     * @param cert certificate where the function gets the certificate data from
+     * @param main main function (needed to print to console)
+     * @return the List<String> of certificate data
+     */
+    private List<String> prepareOutput(javax.security.cert.X509Certificate cert, Main main) {
+        List<String> output = new ArrayList<>();
+        Date date1 = cert.getNotBefore();
+        Date date2 = cert.getNotAfter();
+
+        output.add(0, "Printing certificate data:");
+        output.add(1, "Version: " + (cert.getVersion() + 1));
+        output.add(2, "Serial Number: " + cert.getSerialNumber());
+        output.add(3, "Issuer: " + cert.getIssuerDN());
+        output.add(4, "Subject: " + cert.getSubjectDN());
+        if (testDate(date1, date2)) {
+            output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is valid.");
+            output.add(6, "0");
+        } else {
+            output.add(5, "Validity: " + date1 + " - " + date2 + " - The certificate is not valid.");
+            output.add(6, "1");
+        }
+        output.add(7, "Subject Public Key Info: " + cert.getPublicKey());
+        output.add(8, "Hash Code: " + cert.hashCode());
+        output.add(9, "Signature algorithm: " + cert.getSigAlgName() + ". The algorithm type is " + cert.getPublicKey().getAlgorithm() + ".");
+
+        main.printInfo("successfully read certificate");
+
+        return output;
     }
 }

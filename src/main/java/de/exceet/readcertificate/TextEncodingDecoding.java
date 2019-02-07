@@ -130,13 +130,8 @@ public class TextEncodingDecoding {
      * @param publicKey public key needed for encryption
      * @param message   message as String
      * @return the encrypted message
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
      */
-    public byte[] encrypt(PublicKey publicKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private byte[] encrypt(PublicKey publicKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("encrypting Text");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
@@ -150,13 +145,8 @@ public class TextEncodingDecoding {
      * @param privateKey public key needed for encryption
      * @param encrypted  encrypted message as byte array
      * @return the decrypted message as byte array
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
      */
-    public byte[] decrypt(PrivateKey privateKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private byte[] decrypt(PrivateKey privateKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("decrypting Text");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
@@ -170,13 +160,8 @@ public class TextEncodingDecoding {
      * @param privateKey public key needed for encryption
      * @param message    message as String
      * @return the encrypted message
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
      */
-    public byte[] encryptCert(PrivateKey privateKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private byte[] encryptCert(PrivateKey privateKey, String message, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("encrypting certificate");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
@@ -190,13 +175,8 @@ public class TextEncodingDecoding {
      * @param publicKey public key needed for encryption
      * @param encrypted encrypted message as byte array
      * @return the decrypted message as byte array
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
-     * @throws IllegalBlockSizeException
-     * @throws BadPaddingException
      */
-    public byte[] decryptCert(PublicKey publicKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private byte[] decryptCert(PublicKey publicKey, byte[] encrypted, Main main) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         main.printInfo("decrypting certificate");
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
@@ -210,7 +190,7 @@ public class TextEncodingDecoding {
      * @param f   file name of the .txt file
      * @param msg msg to be written
      */
-    public void write(String f, String msg, Main main) {
+    private void write(String f, String msg, Main main) {
         try {
             if (f == null) {
                 main.printError("you have to enter a file name with parameter --file <filename>");
@@ -243,7 +223,7 @@ public class TextEncodingDecoding {
      * @param f file name of the .txt file
      * @return msg that has been read
      */
-    public String read(String f, Main main) {
+    private String read(String f, Main main) {
         String out = "";
         try {
             int c = 0;
@@ -276,11 +256,8 @@ public class TextEncodingDecoding {
      *
      * @param file file where the private key is saved (as byte[])
      * @return the private key
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     * @throws InvalidKeySpecException
      */
-    public PrivateKey getPrivateKey(String file, Main main) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    private PrivateKey getPrivateKey(String file, Main main) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         main.printInfo("getting private key");
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return kf.generatePrivate(new PKCS8EncodedKeySpec(FileUtils.readFileToByteArray(new File(file))));
@@ -291,10 +268,8 @@ public class TextEncodingDecoding {
      *
      * @param file file where the certificate is saved
      * @return the public key
-     * @throws CertificateException
-     * @throws IOException
      */
-    public PublicKey getPublicKey(String file, Main main) throws CertificateException, IOException {
+    private PublicKey getPublicKey(String file, Main main) throws CertificateException, IOException {
         main.printInfo("getting public key");
         InputStream inStream = new FileInputStream(file);
         javax.security.cert.X509Certificate cert = javax.security.cert.X509Certificate.getInstance(inStream);
@@ -308,10 +283,8 @@ public class TextEncodingDecoding {
      * @param file file where the certificate is saved
      * @return true if the certificate is valid <br>
      * false if the certificate isn't valid
-     * @throws CertificateException
-     * @throws IOException
      */
-    public boolean getValidity(String file, Main main) throws CertificateException, IOException {
+    private boolean getValidity(String file, Main main) throws CertificateException, IOException {
         EditCertificate ec = new EditCertificate();
         main.printInfo("checking validity");
         InputStream inStream = new FileInputStream(file);

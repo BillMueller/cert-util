@@ -10,77 +10,77 @@ import java.security.cert.CertificateEncodingException;
 import java.util.*;
 
 public class Main {
-    public String ANSI_RESET = "\u001B[0m";
-    public String ANSI_ERROR = "\u001B[91m";
-    public String ANSI_HELP = "\u001B[92m";
-    public String ANSI_INPUT = "\u001B[93m";
-    public String ANSI_OUTPUT = "\u001B[94m";
-
-    @Parameter(names = {"setConfig", "sc"}, description = "copies the config.properties file to a custom file and sets it as default config file")
-    public boolean setConfig;
-    @Parameter(names = {"writeCertificate", "wc"}, description = "generate a new certificate")
-    public boolean writeC;
-    @Parameter(names = {"writeDocument", "wd"}, description = "changes to J-Console")
-    public boolean writeD;
-    @Parameter(names = {"readCertificate", "rc"}, description = "read a certificate")
-    public boolean readC;
-    @Parameter(names = {"readDocument", "rd"}, description = "reads a file")
-    public boolean readD;
-    @Parameter(names = {"changeDirectory", "cd"}, description = "changes working directory")
-    public boolean cd;
-    @Parameter(names = "help", description = "prints out a general help")
-    public boolean gHelp;
-    @Parameter(names = "exit", description = "exits J-Console/J-Editor")
-    public static boolean exit;
-    @Parameter(names = {"encodeDocument", "ed"}, description = "encodes a text file with a certificate")
-    public boolean et;
-    @Parameter(names = {"decodeDocument", "dd"}, description = "decodes a text file with a private key")
-    public boolean dt;
-    @Parameter(names = {"changeStyle", "cs"}, description = "changes between colored and non-colored mode")
-    public boolean cs;
-    //-------------------------------+
-    @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
-    public String iName;
-    @Parameter(names = {"--subjectName", "--sName"}, description = "enter the owner name")
-    public String sName;
-    @Parameter(names = {"--startDate", "--sDate"}, description = "startdate for the certificate to be valid")
-    public String sDate;
-    @Parameter(names = {"--expiryDate", "--eDate"}, description = "expirydate for the certificate to be valid")
-    public String eDate;
-    @Parameter(names = "--keySize", description = "keySize of the public key (in bits)")
-    public int keys;
-    @Parameter(names = {"--serialNumber", "--serNumb"}, description = "set a serial number")
-    public long serNumber;
-    @Parameter(names = "--file", description = "set the certificate name")
-    public String fileName;
-    @Parameter(names = {"--certificateFile", "--certFile"}, description = "set the certificate name")
-    public String certFileName;
-    @Parameter(names = {"--signatureAlgorithm", "signAlg"}, description = "set signature algorithm")
-    public String signAlg;
-    @Parameter(names = "--read", description = "decide if you want to read the certificate after generating it")
-    public boolean bRead;
-    @Parameter(names = {"--help", "-h"}, description = "prints out a help for the command entered before")
-    public boolean help;
-    @Parameter(names = "--lines", description = "prints out the number of lines the document should have")
-    public int lines;
-    @Parameter(names = "--copyConfig", description = "if the program should copy the config file to the directory")
-    public boolean copyConfig;
-    @Parameter(names = "--directory", description = "set the directory name")
-    public String directoryName;
-    @Parameter(names = "--certTargetDir", description = "set the custom certificate target folder")
-    public String certTargetDirectory;
-    @Parameter(names = "--certDirectory", description = "set the custom certificate folder")
-    public String certDirectory;
-    @Parameter(names = "--docDirectory", description = "set the custom document folder")
-    public String docDirectory;
-    @Parameter(names = "--style", description = "set a style")
-    public String cStyle;
-    @Parameter(names = "--toggle", description = "toggle the style")
-    public boolean styleToggle;
+    private String ANSI_RESET = "\u001B[0m";
+    private String ANSI_ERROR = "\u001B[91m";
+    private String ANSI_HELP = "\u001B[92m";
+    private String ANSI_INPUT = "\u001B[93m";
+    private String ANSI_OUTPUT = "\u001B[94m";
 
     public int style = 0;
     private String pFile;
-    public String configFile = "default";
+    private String configFile = "default";
+
+    @Parameter(names = {"setConfig", "sc"}, description = "copies the config.properties file to a custom file and sets it as default config file")
+    private boolean setConfig;
+    @Parameter(names = {"writeCertificate", "wc"}, description = "generate a new certificate")
+    private boolean writeC;
+    @Parameter(names = {"writeDocument", "wd"}, description = "changes to J-Console")
+    private boolean writeD;
+    @Parameter(names = {"readCertificate", "rc"}, description = "read a certificate")
+    private boolean readC;
+    @Parameter(names = {"readDocument", "rd"}, description = "reads a file")
+    private boolean readD;
+    @Parameter(names = {"changeDirectory", "cd"}, description = "changes working directory")
+    private boolean cd;
+    @Parameter(names = "help", description = "prints out a general help")
+    private boolean gHelp;
+    @Parameter(names = "exit", description = "exits J-Console/J-Editor")
+    private static boolean exit;
+    @Parameter(names = {"encodeDocument", "ed"}, description = "encodes a text file with a certificate")
+    private boolean et;
+    @Parameter(names = {"decodeDocument", "dd"}, description = "decodes a text file with a private key")
+    private boolean dt;
+    @Parameter(names = {"changeStyle", "cs"}, description = "changes between colored and non-colored mode")
+    private boolean cs;
+
+    @Parameter(names = {"--issuerName", "--iName"}, description = "eneter the ca name")
+    private String iName;
+    @Parameter(names = {"--subjectName", "--sName"}, description = "enter the owner name")
+    private String sName;
+    @Parameter(names = {"--startDate", "--sDate"}, description = "startdate for the certificate to be valid")
+    private String sDate;
+    @Parameter(names = {"--expiryDate", "--eDate"}, description = "expirydate for the certificate to be valid")
+    private String eDate;
+    @Parameter(names = "--keySize", description = "keySize of the public key (in bits)")
+    private int keys;
+    @Parameter(names = {"--serialNumber", "--serNumb"}, description = "set a serial number")
+    private long serNumber;
+    @Parameter(names = "--file", description = "set the certificate name")
+    private String fileName;
+    @Parameter(names = {"--certificateFile", "--certFile"}, description = "set the certificate name")
+    private String certFileName;
+    @Parameter(names = {"--signatureAlgorithm", "signAlg"}, description = "set signature algorithm")
+    private String signAlg;
+    @Parameter(names = "--read", description = "decide if you want to read the certificate after generating it")
+    private boolean bRead;
+    @Parameter(names = {"--help", "-h"}, description = "prints out a help for the command entered before")
+    private boolean help;
+    @Parameter(names = "--lines", description = "prints out the number of lines the document should have")
+    private int lines;
+    @Parameter(names = "--copyConfig", description = "if the program should copy the config file to the directory")
+    private boolean copyConfig;
+    @Parameter(names = "--directory", description = "set the directory name")
+    private String directoryName;
+    @Parameter(names = "--certTargetDir", description = "set the custom certificate target folder")
+    private String certTargetDirectory;
+    @Parameter(names = "--certDirectory", description = "set the custom certificate folder")
+    private String certDirectory;
+    @Parameter(names = "--docDirectory", description = "set the custom document folder")
+    private String docDirectory;
+    @Parameter(names = "--style", description = "set a style")
+    private String cStyle;
+    @Parameter(names = "--toggle", description = "toggle the style")
+    private boolean styleToggle;
 
     /**
      * Main function with the J-console input functionality <br>
@@ -92,7 +92,6 @@ public class Main {
      */
     public void main() {
         Main main = new Main();
-        EditDocument ed = new EditDocument();
         Scanner sc = new Scanner(System.in);
         String in;
         JCommander jc;
@@ -141,41 +140,7 @@ public class Main {
 
     private void run(Main main) {
         if (gHelp || help) {
-            if (gHelp) {
-                printHelpToConsole(6);
-            }
-            if (readD) {
-                printHelpToConsole(3);
-            }
-            if (writeD) {
-                printHelpToConsole(5);
-            }
-            if (readC) {
-                printHelpToConsole(1);
-            }
-            if (writeC) {
-                printHelpToConsole(0);
-            }
-            if (et) {
-                printHelpToConsole(7);
-            }
-            if (dt) {
-                printHelpToConsole(8);
-            }
-            if (setConfig) {
-                printHelpToConsole(9);
-            }
-            if (cd) {
-                printHelpToConsole(4);
-                main.cd = false;
-            }
-            if (cs) {
-                printHelpToConsole(10);
-            }
-            if (main.exit) {
-                printHelpToConsole(2);
-                main.exit = false;
-            }
+            callHelp(main);
         } else {
             if (!main.exit) {
                 if (cd) {
@@ -186,42 +151,26 @@ public class Main {
                     String defaultConfigFileName = "config.properties";
                     Properties dProps = callGetPropertiesFile(defaultConfigFileName);
 
-                    String dIssuerName = dProps.getProperty("defaultIssuerName", "ca_name");
-                    String dSubjectName = dProps.getProperty("defaultSubjectName", "owner_name");
-                    int dKeys = Integer.parseInt(dProps.getProperty("defaultHeySize", "4096"));
-                    String dPropsSerNumber = dProps.getProperty("defaultSerialNumber", "default");
-                    String dPropsStDate = dProps.getProperty("defaultStDate", "default");
-                    String dPropsExDate = dProps.getProperty("defaultExDate", "default");
-                    String dPropsValidity = dProps.getProperty("defaultValidity", "default");
-                    String dSignAlg = dProps.getProperty("defaultSignatureAlgorithm", "SHA256withRSA");
-                    int dLineNumber = Integer.parseInt(dProps.getProperty("defaultLineNumber", "10"));
-                    long milSecValid = 31536000000L, dSerNumber;
+                    List<String> props = getPropertiesData(dProps);
 
-                    if (!dPropsValidity.equals("default"))
-                        milSecValid = Long.valueOf(dPropsValidity);
+                    String dIssuerName = props.get(0);
+                    String dSubjectName = props.get(1);
+                    int dKeys = Integer.parseInt(props.get(2));
+                    String dPropsSerNumber = props.get(3);
+                    String dPropsStDate = props.get(4);
+                    String dPropsExDate = props.get(5);
+                    String dPropsValidity = props.get(6);
+                    String dSignAlg = props.get(7);
+                    int dLineNumber = Integer.parseInt(props.get(8));
 
-                    if (dPropsSerNumber.equals("default"))
-                        dSerNumber = new Date().getTime();
-                    else
-                        dSerNumber = Long.valueOf(dPropsSerNumber);
+                    long milSecValid = !dPropsValidity.equals("default") ? Long.valueOf(dPropsValidity) : 31536000000L;
+
+                    long dSerNumber = dPropsSerNumber.equals("default") ? new Date().getTime() : Long.valueOf(dPropsSerNumber);
 
                     Date dStDate = setDefaultPropertiesDates(dPropsStDate, 0);
                     Date dExDate = setDefaultPropertiesDates(dPropsExDate, milSecValid);
 
-                    if (readD)
-                        callReadDocument(main);
-                    else if (writeD)
-                        callWriteDocument(main, dLineNumber);
-                    else if (writeC)
-                        callWriteCertificate(main, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
-                    else if (readC)
-                        callReadCertificate(main);
-                    else if (et)
-                        callEncodeDocument(main);
-                    else if (dt)
-                        callDecodeDocument(main);
-                    else if (setConfig)
-                        callSetConfig();
+                    callCommands(main, dLineNumber, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
                 }
 
             }
@@ -468,6 +417,9 @@ public class Main {
 
     //-----------+
 
+    /**
+     * calls the functions needed when the "setConfig" command is executed
+     */
     private void callSetConfig() {
         if (directoryName == null)
             printError("you have to enter a directory path where your want the new config file to be with the argument --directory <filename>");
@@ -479,10 +431,20 @@ public class Main {
         }
     }
 
+    /**
+     * Sets the default config file to the target directory
+     *
+     * @param targetDirectory target directory to set the config File to
+     */
     private void setConfig(String targetDirectory) {
         configFile = targetDirectory;
     }
 
+    /**
+     * Copies the Config file to the target directory
+     *
+     * @param targetDirectory directory to copy the current config file to
+     */
     private void copyConfigFile(String targetDirectory) {
         Properties prop;
         try {
@@ -496,6 +458,9 @@ public class Main {
 
     }
 
+    /**
+     * Calls all functions needed when the "changeStyle" command is executed
+     */
     private void callChangeStyle() {
         if (styleToggle) {
             toggleStyle();
@@ -516,10 +481,17 @@ public class Main {
         setMessageColor();
     }
 
+    /**
+     * Toggles the style by adding the style variable by one and resetting it to 0 if it reches 5
+     */
     private void toggleStyle() {
         style = (style + 1) % 5;
     }
 
+    /**
+     * Sets the message color of all messages to yellow if the style equals 2
+     * Otherwise it sets it back to the default colors
+     */
     private void setMessageColor() {
         if (style == 2) {
             ANSI_ERROR = ANSI_INPUT;
@@ -532,6 +504,11 @@ public class Main {
         }
     }
 
+    /**
+     * Calls all functions needed when the "decodeDocument" command is executed
+     *
+     * @param main main class object (needed for the called functions and for printing to the console)
+     */
     private void callDecodeDocument(Main main) {
         docDirectory = docDirectory != null ? docDirectory : main.pFile;
         if (fileName == null || certFileName == null)
@@ -540,6 +517,11 @@ public class Main {
             new TextEncodingDecoding().main(main.pFile, fileName, certFileName, docDirectory, 1, main);
     }
 
+    /**
+     * Calls all functions needed when the "encodeDocument" command is executed
+     *
+     * @param main main class object (needed for the called functions and for printing to the console)
+     */
     private void callEncodeDocument(Main main) {
         certDirectory = certDirectory != null ? certDirectory : main.pFile;
         docDirectory = docDirectory != null ? docDirectory : main.pFile;
@@ -549,6 +531,11 @@ public class Main {
             new TextEncodingDecoding().main(certDirectory, fileName, certFileName, docDirectory, 0, main);
     }
 
+    /**
+     * Calls all functions needed when the "readCertificate" command is executed
+     *
+     * @param main main class object (needed for the called functions and for printing to the console)
+     */
     private void callReadCertificate(Main main) {
         if (fileName == null)
             main.printError("you have to enter a file name with the argument --file <filename>");
@@ -563,6 +550,19 @@ public class Main {
         }
     }
 
+    /**
+     * /**
+     * Calls all functions needed when the "decodeDocument" command is executed
+     *
+     * @param main         main class object (needed for the called functions and for printing to the console)
+     * @param dIssuerName  default value (needed to call functions)
+     * @param dSubjectName default value (needed to call functions)
+     * @param dStDate      default value (needed to call functions)
+     * @param dExDate      default value (needed to call functions)
+     * @param dKeyS        default value (needed to call functions)
+     * @param dSerNumber   default value (needed to call functions)
+     * @param dSignAlg     default value (needed to call functions)
+     */
     private void callWriteCertificate(Main main, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeyS, long dSerNumber, String dSignAlg) {
         if (fileName == null)
             main.printError("you have to enter a file name with the argument --file <filename>");
@@ -601,6 +601,18 @@ public class Main {
         }
     }
 
+    /**
+     * Prepares all values needed to start the EditDocument.write() function
+     *
+     * @param dIssuerName  default value if the parameter wasn't set via command parameter
+     * @param dSubjectName default value if the parameter wasn't set via command parameter
+     * @param dStDate      default value if the parameter wasn't set via command parameter
+     * @param dExDate      default value if the parameter wasn't set via command parameter
+     * @param dKeySize     default value if the parameter wasn't set via command parameter
+     * @param dSerNumber   default value if the parameter wasn't set via command parameter
+     * @param dSignAlg     default value if the parameter wasn't set via command parameter
+     * @return A list of that contains the start and expiry date (since these aren't public variables)
+     */
     private List<Date> prepareCertificateWriterVariable(String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeySize, long dSerNumber, String dSignAlg) {
         List<Date> outputList = new ArrayList<>();
 
@@ -616,12 +628,24 @@ public class Main {
         return outputList;
     }
 
+    /**
+     * Generates a key pair of the key size given
+     *
+     * @param KeySize key size that the keys in the key pair will have (in bits)
+     * @return the generated key pair
+     * @throws Exception if the key pair couldn't be generated (probably because of a key that's smaller than 512)
+     */
     private KeyPair generateKeyPair(int KeySize) throws Exception {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(KeySize);
         return keyGen.generateKeyPair();
     }
 
+    /**
+     * Calls all functions needed when the "readDocument" command is executed
+     *
+     * @param main main class object (needed for the called functions and for printing to the console)
+     */
     private void callReadDocument(Main main) {
         if (fileName == null)
             main.printError("you have to enter a file name with the argument --file <filename>");
@@ -629,6 +653,12 @@ public class Main {
             new EditDocument().read(fileName, main.pFile, main);
     }
 
+    /**
+     * Calls all functions needed when the "writeDocument" command is executed
+     *
+     * @param main        main class object (needed for the called functions and for printing to the console)
+     * @param dLineNumber default number of lines
+     */
     private void callWriteDocument(Main main, int dLineNumber) {
         if (fileName == null)
             main.printError("you have to enter a file name with the argument --file <filename>");
@@ -759,6 +789,14 @@ public class Main {
         }
     }
 
+    /**
+     * Tests if the input is "default"
+     *
+     * @param propertiesFileInput input
+     * @param milSecValid         time (in mil secs) the Date should be behind the time right now
+     * @return if input = "default" -> the date now + milSecValid (in ms) <br>
+     * if input != "default" -> the input
+     */
     private Date setDefaultPropertiesDates(String propertiesFileInput, long milSecValid) {
         Date timeNow = new Date();
         if (propertiesFileInput.equals("default")) {
@@ -768,6 +806,34 @@ public class Main {
             return stringToDate(propertiesFileInput);
     }
 
+    /**
+     * Gets all properties from the properties file and stores and returns them in a List
+     *
+     * @param properties the properties file to take the properties from
+     * @return a List with all properties file data needed in the later called functions
+     */
+    private List<String> getPropertiesData(Properties properties) {
+        List<String> output = new ArrayList<>();
+
+        output.add(0, properties.getProperty("defaultIssuerName", "ca_name"));
+        output.add(1, properties.getProperty("defaultSubjectName", "owner_name"));
+        output.add(2, properties.getProperty("defaultKeySize", "4096"));
+        output.add(3, properties.getProperty("defaultSerialNumber", "default"));
+        output.add(4, properties.getProperty("defaultStDate", "default"));
+        output.add(5, properties.getProperty("defaultExDate", "default"));
+        output.add(6, properties.getProperty("defaultValidity", "default"));
+        output.add(7, properties.getProperty("defaultSignatureAlgorithm", "SHA256withRSA"));
+        output.add(8, properties.getProperty("defaultLineNumber", "10"));
+
+        return output;
+    }
+
+    /**
+     * Calls the current config file set
+     *
+     * @param defaultConfigFileName the name of the config file (by default config.properties)
+     * @return properties of the properties file (new Properties() if the file couldn't be found)
+     */
     private Properties callGetPropertiesFile(String defaultConfigFileName) {
         if (!configFile.equals("default")) {
             try {
@@ -787,5 +853,78 @@ public class Main {
                 return new Properties();
             }
         }
+    }
+
+    /**
+     * Calls the printHelpToConsole function with the right parameter if the "help" command  or the -h / --help parameters gets executed
+     *
+     * @param main main function (needed to get the exit variable
+     */
+    private void callHelp(Main main) {
+        if (gHelp) {
+            printHelpToConsole(6);
+        }
+        if (readD) {
+            printHelpToConsole(3);
+        }
+        if (writeD) {
+            printHelpToConsole(5);
+        }
+        if (readC) {
+            printHelpToConsole(1);
+        }
+        if (writeC) {
+            printHelpToConsole(0);
+        }
+        if (et) {
+            printHelpToConsole(7);
+        }
+        if (dt) {
+            printHelpToConsole(8);
+        }
+        if (setConfig) {
+            printHelpToConsole(9);
+        }
+        if (cd) {
+            printHelpToConsole(4);
+            main.cd = false;
+        }
+        if (cs) {
+            printHelpToConsole(10);
+        }
+        if (main.exit) {
+            printHelpToConsole(2);
+            main.exit = false;
+        }
+    }
+
+    /**
+     * Calls the needed call* functions if a command gets executed
+     *
+     * @param main         main function (needed for the following functions)
+     * @param dLineNumber  default value (needed for the following functions)
+     * @param dIssuerName  default value (needed for the following functions)
+     * @param dSubjectName default value (needed for the following functions)
+     * @param dStDate      default value (needed for the following functions)
+     * @param dExDate      default value (needed for the following functions)
+     * @param dKeys        default value (needed for the following functions)
+     * @param dSerNumber   default value (needed for the following functions)
+     * @param dSignAlg     default value (needed for the following functions)
+     */
+    private void callCommands(Main main, int dLineNumber, String dIssuerName, String dSubjectName, Date dStDate, Date dExDate, int dKeys, long dSerNumber, String dSignAlg) {
+        if (readD)
+            callReadDocument(main);
+        else if (writeD)
+            callWriteDocument(main, dLineNumber);
+        else if (writeC)
+            callWriteCertificate(main, dIssuerName, dSubjectName, dStDate, dExDate, dKeys, dSerNumber, dSignAlg);
+        else if (readC)
+            callReadCertificate(main);
+        else if (et)
+            callEncodeDocument(main);
+        else if (dt)
+            callDecodeDocument(main);
+        else if (setConfig)
+            callSetConfig();
     }
 }
